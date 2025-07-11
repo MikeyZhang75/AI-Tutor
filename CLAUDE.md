@@ -71,8 +71,9 @@ npm run reset-project  # Reset to blank Expo project
     - Theme-aware styling and borders
     - Full-width responsive layout
     - Uses react-native-view-shot for image capture with base64 output
-    - Supports ref forwarding with `captureCanvas` method for programmatic capture
+    - Supports ref forwarding with `captureCanvas` and `hasStrokes` methods
     - Integrates expo-media-library for photo saving functionality
+    - Self-contained state management without external coupling
 - **Hooks**: All hooks have been migrated to `/lib/` directory
   - `useColorScheme` - Returns object with colorScheme, isDarkColorScheme, setColorScheme, and toggleColorScheme
   - `useThemeColor` - Returns theme-aware colors based on current color scheme
