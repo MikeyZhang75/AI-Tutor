@@ -5,6 +5,7 @@
 	"scripts": {
 		"start": "expo start",
 		"start:api": "bun run --watch ./api/index.ts",
+		"build:api": "bun build --compile --minify-whitespace --minify-syntax --target bun --outfile .dist/api/server ./api/index.ts",
 		"reset-project": "node ./scripts/reset-project.js",
 		"android": "expo start --android",
 		"ios": "expo start --ios",

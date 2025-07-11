@@ -40,3 +40,6 @@ app-example
 
 # Env
 .env
+
+# Distribution
+.dist/
