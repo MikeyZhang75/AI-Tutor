@@ -1,59 +1,77 @@
-import { Image } from "expo-image";
-import { Platform } from "react-native";
-
-import { HelloWave } from "@/components/HelloWave";
-import ParallaxScrollView from "@/components/ParallaxScrollView";
-import { ThemedText } from "@/components/ThemedText";
+import { useCallback, useEffect, useState } from "react";
+import { RefreshControl, ScrollView } from "react-native";
+import { QuestionSetCard } from "@/components/QuestionSetCard";
 import { ThemedView } from "@/components/ThemedView";
+import { Text } from "@/components/ui/text";
+import { mockQuestionSets } from "@/data/mockQuestions";
+import { progressStorage } from "@/lib/storage/progressStorage";
+import type { QuestionSetProgress } from "@/types/question.types";
 
 export default function HomeScreen() {
+	const [progressData, setProgressData] = useState<
+		Record<string, QuestionSetProgress>
+	>({});
+	const [refreshing, setRefreshing] = useState(false);
+
+	const loadProgress = useCallback(async () => {
+		const allProgress = await progressStorage.getAllSetProgress();
+		const progressMap = allProgress.reduce(
+			(acc, progress) => {
+				acc[progress.setId] = progress;
+				return acc;
+			},
+			{} as Record<string, QuestionSetProgress>,
+		);
+		setProgressData(progressMap);
+	}, []);
+
+	useEffect(() => {
+		loadProgress();
+	}, [loadProgress]);
+
+	const onRefresh = useCallback(async () => {
+		setRefreshing(true);
+		await loadProgress();
+		setRefreshing(false);
+	}, [loadProgress]);
+
 	return (
-		<ParallaxScrollView
-			headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
-			headerImage={
-				<Image
-					source={require("@/assets/images/partial-react-logo.png")}
-					className="h-[178px] w-[290px] absolute bottom-0 left-0"
-				/>
+		<ScrollView
+			className="flex-1 bg-gray-50 dark:bg-gray-900"
+			refreshControl={
+				<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
 			}
 		>
-			<ThemedView className="flex-row items-center gap-2">
-				<ThemedText type="title">Welcome!</ThemedText>
-				<HelloWave />
+			{/* Header */}
+			<ThemedView className="bg-blue-600 dark:bg-blue-700 px-5 pt-12 pb-8 rounded-b-3xl shadow-lg">
+				<Text className="text-3xl font-bold leading-8 text-white mb-2">
+					🎓 AI Tutor
+				</Text>
+				<Text className="text-white/80">Choose a question set to practice</Text>
 			</ThemedView>
-			<ThemedView className="gap-2 mb-2">
-				<ThemedText type="subtitle">Step 1: Try it</ThemedText>
-				<ThemedText>
-					Edit{" "}
-					<ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText>{" "}
-					to see changes. Press{" "}
-					<ThemedText type="defaultSemiBold">
-						{Platform.select({
-							ios: "cmd + d",
-							android: "cmd + m",
-							web: "F12",
-						})}
-					</ThemedText>{" "}
-					to open developer tools.
-				</ThemedText>
+
+			{/* Question Sets */}
+			<ThemedView className="px-5 py-6">
+				<Text className="text-xl font-bold mb-4">Available Question Sets</Text>
+
+				{mockQuestionSets.map((set) => {
+					const progress = progressData[set.id];
+					return (
+						<QuestionSetCard
+							key={set.id}
+							questionSet={set}
+							progress={
+								progress
+									? {
+											completed: progress.completed,
+											highScore: progress.highScore,
+										}
+									: undefined
+							}
+						/>
+					);
+				})}
 			</ThemedView>
-			<ThemedView className="gap-2 mb-2">
-				<ThemedText type="subtitle">Step 2: Explore</ThemedText>
-				<ThemedText>
-					{`Tap the Explore tab to learn more about what's included in this starter app.`}
-				</ThemedText>
-			</ThemedView>
-			<ThemedView className="gap-2 mb-2">
-				<ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-				<ThemedText>
-					{`When you're ready, run `}
-					<ThemedText type="defaultSemiBold">npm run reset-project</ThemedText>{" "}
-					to get a fresh <ThemedText type="defaultSemiBold">app</ThemedText>{" "}
-					directory. This will move the current{" "}
-					<ThemedText type="defaultSemiBold">app</ThemedText> to{" "}
-					<ThemedText type="defaultSemiBold">app-example</ThemedText>.
-				</ThemedText>
-			</ThemedView>
-		</ParallaxScrollView>
+		</ScrollView>
 	);
 }

@@ -1,7 +1,7 @@
 import { View } from "react-native";
 import Katex from "react-native-katex";
+import { Text } from "@/components/ui/text";
 import { useColorScheme } from "@/lib/useColorScheme";
-import { ThemedText } from "./ThemedText";
 
 interface MathViewProps {
 	children: string;
@@ -18,7 +18,7 @@ export function MathView({
 
 	// If fallback is true, render plain text
 	if (fallback) {
-		return <ThemedText className={className}>{children}</ThemedText>;
+		return <Text className={className}>{children}</Text>;
 	}
 
 	// Convert the mixed text/LaTeX content to a full LaTeX expression

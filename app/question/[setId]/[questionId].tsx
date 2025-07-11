@@ -1,0 +1,214 @@
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useRef, useState } from "react";
+import { ActivityIndicator, View } from "react-native";
+import type { DrawingCanvasRef } from "@/components/DrawingCanvas";
+import DrawingCanvas from "@/components/DrawingCanvas";
+import { MathView } from "@/components/MathView";
+import { ThemedView } from "@/components/ThemedView";
+import { Button } from "@/components/ui/button";
+import { Text } from "@/components/ui/text";
+import { useQuestions } from "@/contexts/QuestionContext";
+
+export default function QuestionScreen() {
+	const { setId, questionId } = useLocalSearchParams<{
+		setId: string;
+		questionId: string;
+	}>();
+	const router = useRouter();
+	const {
+		currentQuestion,
+		currentSet,
+		submitAnswer,
+		nextQuestion,
+		previousQuestion,
+		isFirstQuestion,
+		isLastQuestion,
+		currentProgress,
+		exitQuestionSet,
+		isLoading,
+		startQuestionSet,
+	} = useQuestions();
+
+	const canvasRef = useRef<DrawingCanvasRef | null>(null);
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [hasCanvasStrokes, setHasCanvasStrokes] = useState(false);
+
+	const questionIndex = Number.parseInt(questionId || "0");
+	const currentAnswer = currentProgress?.answers.find(
+		(a) => a.questionId === currentQuestion?.id,
+	);
+
+	// Initialize question set if not loaded
+	useEffect(() => {
+		if (!currentSet && setId && !isLoading) {
+			startQuestionSet(setId);
+		}
+	}, [currentSet, setId, startQuestionSet, isLoading]);
+
+	const handleSubmit = async () => {
+		if (!canvasRef.current || !canvasRef.current.hasStrokes()) {
+			return;
+		}
+
+		setIsSubmitting(true);
+		try {
+			const base64Image = await canvasRef.current.captureCanvas();
+			if (base64Image) {
+				await submitAnswer(base64Image);
+
+				// Auto-advance to next question after a short delay
+				setTimeout(() => {
+					if (!isLastQuestion) {
+						handleNext();
+					} else {
+						// Navigate to results screen
+						router.push(`/results/${setId}`);
+					}
+				}, 500);
+			}
+		} catch (error) {
+			console.error("Error submitting answer:", error);
+		} finally {
+			setIsSubmitting(false);
+		}
+	};
+
+	const handleNext = () => {
+		nextQuestion();
+		const nextIndex = questionIndex + 1;
+		router.replace(`/question/${setId}/${nextIndex}`);
+	};
+
+	const handlePrevious = () => {
+		previousQuestion();
+		const prevIndex = questionIndex - 1;
+		router.replace(`/question/${setId}/${prevIndex}`);
+	};
+
+	const handleExit = () => {
+		exitQuestionSet();
+		router.replace("/");
+	};
+
+	if (!currentQuestion || !currentSet) {
+		return (
+			<ThemedView className="flex-1 justify-center items-center">
+				<ActivityIndicator size="large" />
+			</ThemedView>
+		);
+	}
+
+	return (
+		<View className="flex-1 bg-gray-50 dark:bg-gray-900">
+			{/* Header Section */}
+			<ThemedView className="bg-blue-600 dark:bg-blue-700 px-5 pt-12 pb-4">
+				<View className="flex-row justify-between items-center mb-2">
+					<Text className="text-white/80 text-sm">{currentSet.title}</Text>
+					<Text className="text-white/80 text-sm">
+						Question {questionIndex + 1} of {currentSet.totalQuestions}
+					</Text>
+				</View>
+
+				{/* Progress bar */}
+				<View className="h-2 bg-white/20 rounded-full overflow-hidden">
+					<View
+						className="h-full bg-white"
+						style={{
+							width: `${((questionIndex + 1) / currentSet.totalQuestions) * 100}%`,
+						}}
+					/>
+				</View>
+			</ThemedView>
+
+			{/* Content Section */}
+			<View className="flex-1 px-5 py-4">
+				{/* Question Card */}
+				<ThemedView className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm mb-4">
+					<View className="flex-row justify-between items-start mb-2">
+						<Text className="text-sm font-semibold opacity-60">
+							Question {questionIndex + 1}
+						</Text>
+						<Text className="text-sm bg-blue-100 dark:bg-blue-900 px-2 py-1 rounded">
+							{currentQuestion.points} points
+						</Text>
+					</View>
+					<MathView>{currentQuestion.text}</MathView>
+				</ThemedView>
+
+				{/* Canvas Area or Answer Status */}
+				{currentAnswer ? (
+					<ThemedView className="bg-green-50 dark:bg-green-900/30 p-4 rounded-lg">
+						<Text className="text-base font-semibold text-green-800 dark:text-green-200 mb-2">
+							✓ Answer Submitted
+						</Text>
+						<Text className="text-sm opacity-70">
+							{currentAnswer.verificationStatus === "pending" &&
+								"Verifying your answer..."}
+							{currentAnswer.verificationStatus === "correct" &&
+								"Great job! Your answer is correct."}
+							{currentAnswer.verificationStatus === "incorrect" &&
+								"Not quite right. Keep practicing!"}
+						</Text>
+					</ThemedView>
+				) : (
+					<View className="flex-1">
+						<Text className="text-base font-semibold mb-2">
+							Write your solution:
+						</Text>
+						<View className="flex-1 mb-4">
+							<DrawingCanvas
+								ref={canvasRef}
+								onStrokesChange={setHasCanvasStrokes}
+							/>
+						</View>
+					</View>
+				)}
+			</View>
+
+			{/* Bottom Actions Section */}
+			<View className="px-5 pb-6 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+				{!currentAnswer && (
+					<Button
+						onPress={handleSubmit}
+						disabled={isSubmitting || !hasCanvasStrokes}
+						size="lg"
+						className="mb-3 w-full"
+					>
+						<Text className="font-semibold text-white">
+							{isSubmitting ? "Submitting..." : "Submit Answer"}
+						</Text>
+					</Button>
+				)}
+
+				<View className="flex-row gap-3 mb-3">
+					<Button
+						onPress={handlePrevious}
+						disabled={isFirstQuestion}
+						variant="secondary"
+						className="flex-1"
+					>
+						<Text>Previous</Text>
+					</Button>
+					<Button
+						onPress={
+							isLastQuestion && currentAnswer
+								? () => router.push(`/results/${setId}`)
+								: handleNext
+						}
+						disabled={!currentAnswer && !isLastQuestion}
+						variant="secondary"
+						className="flex-1"
+					>
+						<Text>
+							{isLastQuestion && currentAnswer ? "View Results" : "Next"}
+						</Text>
+					</Button>
+				</View>
+
+				<Button onPress={handleExit} variant="ghost" className="w-full">
+					<Text>Exit Question Set</Text>
+				</Button>
+			</View>
+		</View>
+	);
+}

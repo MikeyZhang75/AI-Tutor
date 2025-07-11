@@ -13,6 +13,9 @@ This is an AI-powered tutoring mobile application built with Expo (React Native)
 - **Real-time Feedback**: Modern modal-based feedback with success/error states and animations
 - **Drawing Tools**: Canvas with clear, undo, and save functionality
 - **Photo Library Integration**: Save drawings to device photo library for later reference
+- **Question Set System**: Sequential question sets with background answer verification
+- **Progress Tracking**: Persistent storage of user progress and answers across sessions
+- **Asynchronous Verification**: Answers are verified in the background while users continue to next questions
 
 ## Commands
 
@@ -50,9 +53,12 @@ npm run reset-project  # Reset to blank Expo project
 
 - **Navigation**: File-based routing via Expo Router in `/app/`
   - `(tabs)/_layout.tsx` - Tab navigation layout
-  - `(tabs)/index.tsx` - Home tab
-  - `(tabs)/explore.tsx` - Explore tab
-  - `(tabs)/analyse.tsx` - Analyse tab for solving math problems with modern UI, custom modal feedback, and loading states
+  - `(tabs)/index.tsx` - Home tab showing available question sets
+  - `(tabs)/storage.tsx` - Storage debug tab for viewing saved progress data
+  - `(tabs)/analyse.tsx` - Analyse tab with call-to-action for question sets
+  - `question-set/[id].tsx` - Question set detail and start screen
+  - `question/[setId]/[questionId].tsx` - Individual question solving screen
+  - `results/[setId].tsx` - Results screen showing scores and answer feedback
 - **Styling**: NativeWind v4 for utility-first styling
   - `tailwind.config.js` - Tailwind configuration with custom theme colors
   - `global.css` - Global styles import
@@ -75,10 +81,21 @@ npm run reset-project  # Reset to blank Expo project
     - Integrates expo-media-library for photo saving functionality
     - Self-contained state management without external coupling
   - `Button` - UI component with consistent rounded corners (rounded-lg) across all size variants
+  - `QuestionSetCard` - Card component for displaying question set info on home screen
+  - `MathView` - Component for rendering LaTeX math formulas using KaTeX
 - **Hooks**: All hooks have been migrated to `/lib/` directory
   - `useColorScheme` - Returns object with colorScheme, isDarkColorScheme, setColorScheme, and toggleColorScheme
   - `useThemeColor` - Returns theme-aware colors based on current color scheme
+- **Context**: State management for question flow
+  - `QuestionContext` - Manages current question set state, progress, and answer submission
+- **Storage**: Persistent data storage using AsyncStorage
+  - `/lib/storage/progressStorage.ts` - Manages saving/loading user progress
+  - `/lib/storage/mockStorage.ts` - Mock implementation for API responses
+- **Services**: Business logic and API integration
+  - `/lib/services/verificationService.ts` - Background answer verification with retry logic
 - **Constants**: Design tokens in `/constants/Colors.ts`
+- **Types**: TypeScript type definitions in `/types/`
+  - `question.types.ts` - Types for questions, progress, and verification
 
 ### Backend Structure (Elysia API)
 
@@ -102,6 +119,13 @@ npm run reset-project  # Reset to blank Expo project
 5. **Platform-Specific Code**: Use `.ios.tsx` or `.android.tsx` extensions for platform-specific implementations
 6. **API Communication**: Always use Eden client in `/eden/` for API calls, never direct fetch
 7. **Hooks Location**: All custom hooks should be in `/lib/` directory, not `/hooks/`
+8. **Background Processing**: Answer verification happens asynchronously while users continue
+   - Verification service manages retries and error handling
+   - Progress is saved immediately to prevent data loss
+   - Results are updated in storage when verification completes
+9. **State Persistence**: All user progress is saved to AsyncStorage
+   - Progress survives app restarts
+   - Users can resume question sets from where they left off
 
 ## Important Notes
 
