@@ -123,8 +123,9 @@ npm run reset-project  # Reset to blank Expo project
 - When user says "commit":
   1. Run `bun run check:fix` to ensure code quality and fix linting/formatting issues
   2. Run `bun run check-types` to verify no TypeScript errors exist
-  3. Update @CLAUDE.md documentation
-  4. Add all files by `git add -A`
-  5. Read all git changes with `git diff --staged`
-  6. Generate a descriptive commit message based on the changes
-  7. Commit changes with the generated message
+  3. Add all files by `git add -A`
+  4. Read all git changes with `git diff --staged`
+  5. Update @CLAUDE.md documentation based on the changed files' code
+  6. Add the updated @CLAUDE.md to git with `git add @CLAUDE.md`
+  7. Generate a descriptive commit message based on the changes
+  8. Commit changes with the generated message
