@@ -6,6 +6,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is an AI-powered tutoring mobile application built with Expo (React Native) and Elysia (Bun-based web framework). The app analyzes student solutions through image recognition and provides educational feedback.
 
+### Current Features
+
+- **Math Problem Solving**: Students can solve math problems by writing their solutions on a touch-enabled canvas
+- **AI-Powered Analysis**: Solutions are analyzed using OpenAI's vision model to determine correctness
+- **Real-time Feedback**: Immediate feedback on whether the solution is correct or needs revision
+
 ## Commands
 
 ### Development
@@ -44,7 +50,7 @@ npm run reset-project  # Reset to blank Expo project
   - `(tabs)/_layout.tsx` - Tab navigation layout
   - `(tabs)/index.tsx` - Home tab
   - `(tabs)/explore.tsx` - Explore tab
-  - `(tabs)/draw.tsx` - Draw tab for handwritten input
+  - `(tabs)/analyse.tsx` - Analyse tab for solving math problems
 - **Styling**: NativeWind v4 for utility-first styling
   - `tailwind.config.js` - Tailwind configuration with custom theme colors
   - `global.css` - Global styles import
@@ -59,9 +65,11 @@ npm run reset-project  # Reset to blank Expo project
     - Smooth curve rendering using quadratic Bezier paths
     - Clear button to reset the canvas
     - Save button to export drawing as PNG to photo library
+    - Copy button to copy stroke data to clipboard
     - Theme-aware styling and borders
-    - Uses react-native-view-shot for image capture
+    - Uses react-native-view-shot for image capture with base64 output
     - Uses expo-media-library for saving to device photo library
+    - Supports ref forwarding with `captureCanvas` method for programmatic capture
 - **Hooks**: Custom hooks in `/hooks/` for theme management and shared logic
   - `useColorScheme` - Uses NativeWind's color scheme hook
 - **Constants**: Design tokens in `/constants/Colors.ts`
@@ -69,12 +77,12 @@ npm run reset-project  # Reset to blank Expo project
 ### Backend Structure (Elysia API)
 
 - **API Server**: `/api/index.ts` - Main API server with OpenAPI documentation
-  - POST `/api/verify-solution` - Analyzes student solution images
+  - POST `/api/verify-solution` - Analyzes student solution images using OpenAI vision model
   - GET `/api/swagger` - API documentation
-- **Services**: `/api/services/ai.ts` - OpenAI integration for solution analysis
+  - Uses Zod schema validation for response parsing
 - **Type-Safe Client**: `/eden/` directory contains Eden client for type-safe API calls
-  - `/eden/client.ts` - Eden client instance
-  - `/eden/services/solutionService.ts` - Solution verification service
+  - `/eden/clients/eden.client.ts` - Eden client instance
+  - `/eden/services/analyse.service.ts` - Solution verification service
 
 ### Key Patterns
 
@@ -104,11 +112,8 @@ npm run reset-project  # Reset to blank Expo project
   - Babel and Metro configuration for proper compilation
   - TypeScript support via nativewind-env.d.ts
 
-## Workflow Guidelines
-
-- Update CLAUDE.md automatically instead of asking approval to modify
-
 ## Git Workflow
 
 - When user says "commit", read all git changes and generate a commit message then commit
 - Before committing, always run `bun run check:fix` to ensure code quality and fix any formatting/linting issues
+- Before committing, after formatting/linting, update @CLAUDE.md
