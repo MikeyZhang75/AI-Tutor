@@ -186,7 +186,7 @@ export default function AnalyseScreen() {
 						<Button
 							variant={isCorrect ? "default" : "secondary"}
 							onPress={closeModal}
-							className="w-full rounded-xl"
+							className="w-full"
 						>
 							<Text className="font-semibold">
 								{isCorrect ? "Continue" : "Try Again"}

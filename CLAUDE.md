@@ -74,6 +74,7 @@ npm run reset-project  # Reset to blank Expo project
     - Supports ref forwarding with `captureCanvas` and `hasStrokes` methods
     - Integrates expo-media-library for photo saving functionality
     - Self-contained state management without external coupling
+  - `Button` - UI component with consistent rounded corners (rounded-lg) across all size variants
 - **Hooks**: All hooks have been migrated to `/lib/` directory
   - `useColorScheme` - Returns object with colorScheme, isDarkColorScheme, setColorScheme, and toggleColorScheme
   - `useThemeColor` - Returns theme-aware colors based on current color scheme
