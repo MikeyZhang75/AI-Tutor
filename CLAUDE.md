@@ -111,3 +111,4 @@ npm run reset-project  # Reset to blank Expo project
 ## Git Workflow
 
 - When user says "commit", read all git changes and generate a commit message then commit
+- Before committing, always run `bun run check:fix` to ensure code quality and fix any formatting/linting issues

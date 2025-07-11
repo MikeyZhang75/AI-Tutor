@@ -202,13 +202,25 @@ export default function DrawingCanvas() {
 						</View>
 					</ViewShot>
 					<View className="flex-row mt-5 gap-[15px]">
-						<Button variant="destructive" onPress={clearCanvas} disabled={strokes.length === 0}>
+						<Button
+							variant="destructive"
+							onPress={clearCanvas}
+							disabled={strokes.length === 0}
+						>
 							<Text className="text-base font-semibold">Clear</Text>
 						</Button>
-						<Button variant="default" onPress={saveToLocal} disabled={strokes.length === 0}>
+						<Button
+							variant="default"
+							onPress={saveToLocal}
+							disabled={strokes.length === 0}
+						>
 							<Text className="text-base font-semibold">Save</Text>
 						</Button>
-						<Button variant="secondary" onPress={copyToClipboard} disabled={strokes.length === 0}>
+						<Button
+							variant="secondary"
+							onPress={copyToClipboard}
+							disabled={strokes.length === 0}
+						>
 							<Text className="text-base font-semibold">Copy</Text>
 						</Button>
 					</View>
