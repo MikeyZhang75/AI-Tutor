@@ -29,7 +29,6 @@ export default function AnalyseScreen() {
 	const [showResult, setShowResult] = useState(false);
 	const [isCorrect, setIsCorrect] = useState(false);
 	const [resultMessage, setResultMessage] = useState("");
-	const [hasStrokes, setHasStrokes] = useState(false);
 	const { isDarkColorScheme } = useColorScheme();
 
 	const handleSubmit = async () => {
@@ -114,7 +113,7 @@ export default function AnalyseScreen() {
 
 				{/* Canvas Section */}
 				<View className="flex-1 px-6">
-					<DrawingCanvas ref={canvasRef} onStrokesChange={setHasStrokes} />
+					<DrawingCanvas ref={canvasRef} />
 				</View>
 
 				{/* Submit Button */}
@@ -122,7 +121,7 @@ export default function AnalyseScreen() {
 					<Button
 						variant="default"
 						onPress={handleSubmit}
-						disabled={isLoading || !hasStrokes}
+						disabled={isLoading}
 						className="w-full"
 					>
 						{isLoading ? (
