@@ -10,7 +10,9 @@ This is an AI-powered tutoring mobile application built with Expo (React Native)
 
 - **Math Problem Solving**: Students can solve math problems by writing their solutions on a touch-enabled canvas
 - **AI-Powered Analysis**: Solutions are analyzed using OpenAI's vision model to determine correctness
-- **Real-time Feedback**: Immediate feedback on whether the solution is correct or needs revision
+- **Real-time Feedback**: Modern modal-based feedback with success/error states and animations
+- **Drawing Tools**: Canvas with clear, undo, and save functionality
+- **Photo Library Integration**: Save drawings to device photo library for later reference
 
 ## Commands
 
@@ -50,7 +52,7 @@ npm run reset-project  # Reset to blank Expo project
   - `(tabs)/_layout.tsx` - Tab navigation layout
   - `(tabs)/index.tsx` - Home tab
   - `(tabs)/explore.tsx` - Explore tab
-  - `(tabs)/analyse.tsx` - Analyse tab for solving math problems
+  - `(tabs)/analyse.tsx` - Analyse tab for solving math problems with modern UI, custom modal feedback, and loading states
 - **Styling**: NativeWind v4 for utility-first styling
   - `tailwind.config.js` - Tailwind configuration with custom theme colors
   - `global.css` - Global styles import
@@ -65,11 +67,15 @@ npm run reset-project  # Reset to blank Expo project
     - Smooth curve rendering using quadratic Bezier paths
     - Clear button to reset the canvas
     - Undo button to remove the last drawn stroke
+    - Save button to export drawings to device photo library (creates "AI Tutor Drawings" album)
     - Theme-aware styling and borders
+    - Full-width responsive layout
     - Uses react-native-view-shot for image capture with base64 output
     - Supports ref forwarding with `captureCanvas` method for programmatic capture
-- **Hooks**: Custom hooks in `/hooks/` for theme management and shared logic
-  - `useColorScheme` - Uses NativeWind's color scheme hook
+    - Integrates expo-media-library for photo saving functionality
+- **Hooks**: All hooks have been migrated to `/lib/` directory
+  - `useColorScheme` - Returns object with colorScheme, isDarkColorScheme, setColorScheme, and toggleColorScheme
+  - `useThemeColor` - Returns theme-aware colors based on current color scheme
 - **Constants**: Design tokens in `/constants/Colors.ts`
 
 ### Backend Structure (Elysia API)
@@ -93,6 +99,7 @@ npm run reset-project  # Reset to blank Expo project
    - Theme colors defined in tailwind.config.js
 5. **Platform-Specific Code**: Use `.ios.tsx` or `.android.tsx` extensions for platform-specific implementations
 6. **API Communication**: Always use Eden client in `/eden/` for API calls, never direct fetch
+7. **Hooks Location**: All custom hooks should be in `/lib/` directory, not `/hooks/`
 
 ## Important Notes
 
@@ -117,5 +124,5 @@ npm run reset-project  # Reset to blank Expo project
   2. Run `bun run check-types` to verify no TypeScript errors exist
   3. Read all git changes with `git diff --staged`
   4. Generate a descriptive commit message based on the changes
-  5. Update CLAUDE.md documentation if needed
+  5. Update @CLAUDE.md documentation
   6. Commit changes with the generated message

@@ -99,7 +99,7 @@ export default function AnalyseScreen() {
 				</View>
 
 				{/* Canvas Section */}
-				<View className="flex-1 px-4">
+				<View className="flex-1 px-6">
 					<DrawingCanvas ref={canvasRef} />
 				</View>
 

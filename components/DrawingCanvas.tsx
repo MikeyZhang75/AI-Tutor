@@ -1,7 +1,13 @@
+import * as MediaLibrary from "expo-media-library";
 import { forwardRef, useImperativeHandle, useRef, useState } from "react";
-import { type LayoutChangeEvent, PanResponder, View } from "react-native";
+import {
+	Alert,
+	type LayoutChangeEvent,
+	PanResponder,
+	View,
+} from "react-native";
 import Svg, { Path } from "react-native-svg";
-import ViewShot from "react-native-view-shot";
+import ViewShot, { captureRef } from "react-native-view-shot";
 import { Text } from "@/components/ui/text";
 import { useThemeColor } from "@/lib/useThemeColor";
 import { Button } from "./ui/button";
@@ -43,9 +49,9 @@ const DrawingCanvas = forwardRef<DrawingCanvasRef>((_, ref) => {
 
 	const onCanvasLayout = (event: LayoutChangeEvent) => {
 		const { width, height } = event.nativeEvent.layout;
-		// Make canvas square based on the smaller dimension
-		const size = Math.min(width, height - 80); // Leave space for clear button
-		setCanvasDimensions({ width: size, height: size });
+		// Use full width and make height proportional
+		const canvasHeight = Math.min(width * 0.8, height - 80); // Leave space for buttons
+		setCanvasDimensions({ width, height: canvasHeight });
 	};
 
 	const panResponder = useRef(
@@ -96,6 +102,36 @@ const DrawingCanvas = forwardRef<DrawingCanvasRef>((_, ref) => {
 		}
 	};
 
+	const saveToGallery = async () => {
+		try {
+			// Request permissions
+			const { status } = await MediaLibrary.requestPermissionsAsync();
+			if (status !== "granted") {
+				Alert.alert(
+					"Permission Denied",
+					"Please enable photo library access to save drawings.",
+				);
+				return;
+			}
+
+			// Capture the canvas as file URI
+			if (viewShotRef.current) {
+				const uri = await captureRef(viewShotRef, {
+					format: "png",
+					quality: 1,
+					result: "tmpfile",
+				});
+				// Save to photo library
+				const asset = await MediaLibrary.createAssetAsync(uri);
+				await MediaLibrary.createAlbumAsync("AI Tutor Drawings", asset, false);
+				Alert.alert("Success", "Drawing saved to your photo library!");
+			}
+		} catch (error) {
+			console.error("Error saving to gallery:", error);
+			Alert.alert("Error", "Failed to save drawing. Please try again.");
+		}
+	};
+
 	const pointsToPath = (points: Point[]) => {
 		if (points.length < 2) return "";
 
@@ -125,12 +161,9 @@ const DrawingCanvas = forwardRef<DrawingCanvasRef>((_, ref) => {
 	}));
 
 	return (
-		<View
-			className="flex-1 items-center justify-center"
-			onLayout={onCanvasLayout}
-		>
+		<View className="flex-1" onLayout={onCanvasLayout}>
 			{canvasDimensions.width > 0 && (
-				<View className="items-center">
+				<View className="flex-1">
 					<ViewShot
 						ref={viewShotRef}
 						options={{
@@ -180,7 +213,7 @@ const DrawingCanvas = forwardRef<DrawingCanvasRef>((_, ref) => {
 							</Svg>
 						</View>
 					</ViewShot>
-					<View className="flex-row mt-5 gap-[15px]">
+					<View className="flex-row mt-5 gap-3 justify-center">
 						<Button
 							variant="destructive"
 							onPress={clearCanvas}
@@ -194,6 +227,13 @@ const DrawingCanvas = forwardRef<DrawingCanvasRef>((_, ref) => {
 							disabled={strokes.length === 0}
 						>
 							<Text className="text-base font-semibold">Undo</Text>
+						</Button>
+						<Button
+							variant="default"
+							onPress={saveToGallery}
+							disabled={strokes.length === 0}
+						>
+							<Text className="text-base font-semibold">Save</Text>
 						</Button>
 					</View>
 				</View>
