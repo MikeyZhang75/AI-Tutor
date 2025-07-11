@@ -1,4 +1,4 @@
-import { StyleSheet, View } from "react-native";
+import { View } from "react-native";
 import Katex from "react-native-katex";
 import { useColorScheme } from "@/lib/useColorScheme";
 import { ThemedText } from "./ThemedText";
@@ -8,13 +8,6 @@ interface MathViewProps {
 	className?: string;
 	fallback?: boolean;
 }
-
-const styles = StyleSheet.create({
-	katexContainer: {
-		height: 80,
-		minHeight: 80,
-	},
-});
 
 export function MathView({
 	children,
@@ -73,12 +66,30 @@ export function MathView({
 			height: 100%;
 			margin: 0;
 			padding: 0;
+			overflow: hidden;
+			/* Prevent all touch interactions */
+			touch-action: none;
+			/* Disable text selection to prevent zoom on double-tap */
+			-webkit-user-select: none;
+			-moz-user-select: none;
+			-ms-user-select: none;
+			user-select: none;
+			/* Disable touch callout on iOS */
+			-webkit-touch-callout: none;
+			/* Disable tap highlight */
+			-webkit-tap-highlight-color: transparent;
 		}
 		.katex {
 			color: ${isDarkColorScheme ? "#ffffff" : "#000000"};
 			font-size: 1.2em;
 			margin: 0;
 			display: flex;
+			/* Disable text selection on LaTeX content */
+			-webkit-user-select: none;
+			-moz-user-select: none;
+			-ms-user-select: none;
+			user-select: none;
+			-webkit-touch-callout: none;
 		}
 		.katex-display {
 			margin: 0 !important;
@@ -87,13 +98,20 @@ export function MathView({
 		.katex-error {
 			color: ${isDarkColorScheme ? "#ff6b6b" : "#dc2626"};
 		}
+		/* Viewport rule for older browsers */
+		@viewport {
+			width: device-width;
+			initial-scale: 1;
+			maximum-scale: 1;
+			user-scalable: no;
+		}
 	`;
 
 	console.log("Original text:", children);
 	console.log("Processed expression:", expression);
 
 	return (
-		<View className={className} style={styles.katexContainer}>
+		<View className={`h-20 min-h-[80px] ${className}`}>
 			<Katex
 				expression={expression}
 				displayMode={false}
@@ -104,6 +122,8 @@ export function MathView({
 					backgroundColor: "transparent",
 					flex: 1,
 				}}
+				showsHorizontalScrollIndicator={false}
+				showsVerticalScrollIndicator={false}
 				onLoad={() => console.log("KaTeX loaded successfully")}
 				onError={(error) => console.error("KaTeX error:", error)}
 			/>
