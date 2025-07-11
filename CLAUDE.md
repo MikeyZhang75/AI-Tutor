@@ -44,9 +44,15 @@ npm run reset-project  # Reset to blank Expo project
   - `(tabs)/_layout.tsx` - Tab navigation layout
   - `(tabs)/index.tsx` - Home tab
   - `(tabs)/explore.tsx` - Explore tab
+  - `(tabs)/draw.tsx` - Draw tab for handwritten input
 - **Components**: Themed components in `/components/` with dark/light mode support
   - All components use `ThemedView` and `ThemedText` for consistent theming
   - Platform-specific implementations use `.ios.tsx` or `.android.tsx` extensions
+  - `DrawingCanvas` - Touch-enabled drawing component with:
+    - Multi-stroke support with persistent storage
+    - Smooth curve rendering using quadratic Bezier paths
+    - Clear button to reset the canvas
+    - Theme-aware styling and borders
 - **Hooks**: Custom hooks in `/hooks/` for theme management and shared logic
 - **Constants**: Design tokens in `/constants/Colors.ts`
 
@@ -76,7 +82,13 @@ npm run reset-project  # Reset to blank Expo project
 - Environment variables are required - check `/utils/env.ts` for required vars
 - All new components should support both light and dark themes using `useThemeColor`
 - When adding new API endpoints, update both `/api/index.ts` and create corresponding Eden services
+- The DrawingCanvas component uses react-native-svg for rendering strokes - ensure proper platform setup
+- DrawingCanvas uses useRef for stable stroke references to prevent closure issues during gesture handling
 
 ## Workflow Guidelines
 
 - Whenever one task is completed, ask for approval to modify @CLAUDE.md
+
+## Git Workflow
+
+- When user says "commit", read all git changes and generate a commit message then commit
