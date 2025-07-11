@@ -1,3 +1,4 @@
+import * as Clipboard from "expo-clipboard";
 import * as MediaLibrary from "expo-media-library";
 import { useRef, useState } from "react";
 import {
@@ -120,6 +121,17 @@ export default function DrawingCanvas() {
 		}
 	};
 
+	const copyToClipboard = async () => {
+		try {
+			const strokeData = JSON.stringify(strokes, null, 2);
+			await Clipboard.setStringAsync(strokeData);
+			Alert.alert("Success", "Stroke data copied to clipboard!");
+		} catch (error) {
+			console.error("Error copying to clipboard:", error);
+			Alert.alert("Error", "Failed to copy stroke data. Please try again.");
+		}
+	};
+
 	const pointsToPath = (points: Point[]) => {
 		if (points.length < 2) return "";
 
@@ -190,11 +202,14 @@ export default function DrawingCanvas() {
 						</View>
 					</ViewShot>
 					<View className="flex-row mt-5 gap-[15px]">
-						<Button variant="destructive" onPress={clearCanvas}>
+						<Button variant="destructive" onPress={clearCanvas} disabled={strokes.length === 0}>
 							<Text className="text-base font-semibold">Clear</Text>
 						</Button>
-						<Button variant="default" onPress={saveToLocal}>
+						<Button variant="default" onPress={saveToLocal} disabled={strokes.length === 0}>
 							<Text className="text-base font-semibold">Save</Text>
+						</Button>
+						<Button variant="secondary" onPress={copyToClipboard} disabled={strokes.length === 0}>
+							<Text className="text-base font-semibold">Copy</Text>
 						</Button>
 					</View>
 				</View>
