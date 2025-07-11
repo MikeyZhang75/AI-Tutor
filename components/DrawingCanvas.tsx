@@ -3,7 +3,7 @@ import { type LayoutChangeEvent, PanResponder, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 import ViewShot from "react-native-view-shot";
 import { Text } from "@/components/ui/text";
-import { useThemeColor } from "@/hooks/useThemeColor";
+import { useThemeColor } from "@/lib/useThemeColor";
 import { Button } from "./ui/button";
 
 type Point = {

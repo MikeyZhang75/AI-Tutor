@@ -112,4 +112,10 @@ npm run reset-project  # Reset to blank Expo project
 
 ## Git Workflow
 
-- When user says "commit", read all git changes, generate a commit message, run `bun run check:fix` to ensure code quality, update @CLAUDE.md, then commit
+- When user says "commit":
+  1. Run `bun run check:fix` to ensure code quality and fix linting/formatting issues
+  2. Run `bun run check-types` to verify no TypeScript errors exist
+  3. Read all git changes with `git diff --staged`
+  4. Generate a descriptive commit message based on the changes
+  5. Update CLAUDE.md documentation if needed
+  6. Commit changes with the generated message
