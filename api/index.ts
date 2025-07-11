@@ -66,7 +66,10 @@ const app = new Elysia()
 				store: false,
 			});
 
-			return response.output_text;
+			return {
+				success: true,
+				data: response.output_text,
+			};
 		},
 		{
 			body: t.Object({

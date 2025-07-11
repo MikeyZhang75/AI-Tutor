@@ -17,7 +17,7 @@ export default function TabTwoScreen() {
 					size={310}
 					color="#808080"
 					name="chevron.left.forwardslash.chevron.right"
-					className="absolute -bottom-[90px] -left-[35px]"
+					style={{ position: "absolute", bottom: -90, left: -35 }}
 				/>
 			}
 		>
