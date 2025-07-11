@@ -1,50 +1,64 @@
-# Welcome to your Expo app 👋
+# AI Tutor
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+## Introduction
 
-## Get started
+AI Tutor is an innovative mobile application that leverages artificial intelligence to provide personalized educational support. Built with React Native (Expo) and powered by advanced AI models, this app helps students learn more effectively through interactive problem-solving and real-time feedback.
 
-1. Install dependencies
+## Roadmap
 
-   ```bash
-   npm install
-   ```
+### Question Set Workflow
 
-2. Start the app
+- Users will answer questions in sequential sets
+- Real-time background verification of submitted answers
+- Seamless progression through questions without waiting for results
+- Database updates happen asynchronously as users progress
+- By the time users complete all questions, most answers will already be verified
 
-   ```bash
-   npx expo start
-   ```
+### Key Features
 
-In the output, you'll find options to open the app in a
+1. **Sequential Question Sets**: Questions presented one at a time with smooth transitions
+2. **Background Processing**: Answer verification happens silently while users continue
+3. **Progress Tracking**: Database reflects verification status in real-time
+4. **Optimized UX**: No waiting screens - users can focus on answering questions
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Changelog
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+### 2025-07-12
 
-## Get a fresh project
+- Refactoring:
+  - Simplify DrawingCanvas component and button hover states
+- Fixes:
+  - Replace StyleSheet with NativeWind classes in MathView and disable zoom gestures
+- Style:
+  - Standardize button rounded corners to rounded-lg across all components
+- Documentation:
+  - Update CLAUDE.md to reflect DrawingCanvas refactoring
+  - Update CLAUDE.md to refine and enhance commit process steps
 
-When you're ready, run:
+### 2025-07-11
 
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- Features:
+  - Initial AI-powered tutoring app with Expo frontend and Elysia backend
+  - Drawing functionality with touch-enabled canvas
+  - Save functionality to export drawings to device photo library
+  - Copy button for DrawingCanvas with clipboard functionality
+  - Transform draw tab into analyse tab with math problem solving
+  - Undo button to replace save/copy buttons in DrawingCanvas
+  - LaTeX math rendering for mathematical expressions
+  - Improved drawing canvas UX with placeholder text
+- Refactoring:
+  - Migrate entire project to NativeWind v4 for utility-first styling
+  - Update API response structure and rename mathpix service
+  - Add React Native Reusables components
+  - Migrate hooks from @hooks to @lib directory
+  - Simplify DrawingCanvas component and button hover states
+- Fixes:
+  - Replace StyleSheet with NativeWind classes in MathView
+  - Disable zoom gestures in MathView
+- Build & Tooling:
+  - Add pre-commit linting step to git workflow
+  - Add API compilation script and ignore dist directory
+- Style:
+  - Standardize button rounded corners to rounded-lg across all components
+- Documentation:
+  - Multiple updates to CLAUDE.md for improved workflow automation

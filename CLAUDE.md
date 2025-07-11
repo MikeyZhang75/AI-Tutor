@@ -130,3 +130,11 @@ npm run reset-project  # Reset to blank Expo project
   6. Add the updated @CLAUDE.md to git with `git add @CLAUDE.md`
   7. Generate a descriptive commit message based on the changes
   8. Commit changes with the generated message
+
+- When user says "update changelog" or "generate changelog":
+  1. Use `TZ=Australia/Melbourne git log --since="YYYY-MM-DD 00:00:00" --until="YYYY-MM-DD 23:59:59" --pretty=format:"%h - %s (%cr)" --reverse` to get commits for the specified date
+  2. Or use `TZ=Australia/Melbourne git log --pretty=format:"%h - %s (%ad)" --date=short-local` to see commits with dates
+  3. Read the README.md file to understand the current changelog structure
+  4. Organize commits by category: Features, Refactoring, Fixes, Build & Tooling, Style, Documentation
+  5. Update the changelog section in README.md with the categorized commits
+  6. Use clear, concise descriptions based on the commit messages
