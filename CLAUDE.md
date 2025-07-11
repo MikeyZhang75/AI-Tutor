@@ -45,8 +45,14 @@ npm run reset-project  # Reset to blank Expo project
   - `(tabs)/index.tsx` - Home tab
   - `(tabs)/explore.tsx` - Explore tab
   - `(tabs)/draw.tsx` - Draw tab for handwritten input
+- **Styling**: NativeWind v4 for utility-first styling
+  - `tailwind.config.js` - Tailwind configuration with custom theme colors
+  - `global.css` - Global styles import
+  - All components use NativeWind classes instead of StyleSheet
+  - Dark mode support via NativeWind's `dark:` variant
 - **Components**: Themed components in `/components/` with dark/light mode support
   - All components use `ThemedView` and `ThemedText` for consistent theming
+  - `ThemedView` and `ThemedText` support both NativeWind classes and custom colors
   - Platform-specific implementations use `.ios.tsx` or `.android.tsx` extensions
   - `DrawingCanvas` - Touch-enabled drawing component with:
     - Multi-stroke support with persistent storage
@@ -57,6 +63,7 @@ npm run reset-project  # Reset to blank Expo project
     - Uses react-native-view-shot for image capture
     - Uses expo-media-library for saving to device photo library
 - **Hooks**: Custom hooks in `/hooks/` for theme management and shared logic
+  - `useColorScheme` - Uses NativeWind's color scheme hook
 - **Constants**: Design tokens in `/constants/Colors.ts`
 
 ### Backend Structure (Elysia API)
@@ -73,9 +80,13 @@ npm run reset-project  # Reset to blank Expo project
 
 1. **Type Safety**: End-to-end type safety using Elysia Eden between frontend and backend
 2. **Environment Variables**: Validated using envalid in `/utils/env.ts`
-3. **Theme System**: Automatic dark/light mode with `useColorScheme` hook
-4. **Platform-Specific Code**: Use `.ios.tsx` or `.android.tsx` extensions for platform-specific implementations
-5. **API Communication**: Always use Eden client in `/eden/` for API calls, never direct fetch
+3. **Theme System**: Automatic dark/light mode with NativeWind and `useColorScheme` hook
+4. **Styling**: Use NativeWind utility classes for all styling (no StyleSheet.create)
+   - Use className prop for NativeWind classes
+   - Use style prop only for dynamic values or when necessary
+   - Theme colors defined in tailwind.config.js
+5. **Platform-Specific Code**: Use `.ios.tsx` or `.android.tsx` extensions for platform-specific implementations
+6. **API Communication**: Always use Eden client in `/eden/` for API calls, never direct fetch
 
 ## Important Notes
 
@@ -83,10 +94,15 @@ npm run reset-project  # Reset to blank Expo project
 - Biome is used for formatting/linting - prefer `bun run check:fix` over manual formatting
 - The API server must be running (`bun run start:api`) before starting the Expo app
 - Environment variables are required - check `/utils/env.ts` for required vars
-- All new components should support both light and dark themes using `useThemeColor`
+- All new components should support both light and dark themes using NativeWind's `dark:` variant
+- Use NativeWind classes for styling - avoid creating new StyleSheet objects
 - When adding new API endpoints, update both `/api/index.ts` and create corresponding Eden services
 - The DrawingCanvas component uses react-native-svg for rendering strokes - ensure proper platform setup
 - DrawingCanvas uses useRef for stable stroke references to prevent closure issues during gesture handling
+- NativeWind v4 is configured with:
+  - Custom theme colors matching the app's design system
+  - Babel and Metro configuration for proper compilation
+  - TypeScript support via nativewind-env.d.ts
 
 ## Workflow Guidelines
 

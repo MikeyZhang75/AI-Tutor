@@ -5,7 +5,6 @@ import {
 	type LayoutChangeEvent,
 	PanResponder,
 	Pressable,
-	StyleSheet,
 	View,
 } from "react-native";
 import Svg, { Path } from "react-native-svg";
@@ -140,9 +139,12 @@ export default function DrawingCanvas() {
 	};
 
 	return (
-		<View style={styles.container} onLayout={onCanvasLayout}>
+		<View
+			className="flex-1 items-center justify-center"
+			onLayout={onCanvasLayout}
+		>
 			{canvasDimensions.width > 0 && (
-				<View style={styles.canvasContent}>
+				<View className="items-center">
 					<ViewShot
 						ref={viewShotRef}
 						options={{
@@ -153,21 +155,19 @@ export default function DrawingCanvas() {
 						}}
 					>
 						<View
-							style={[
-								styles.canvasContainer,
-								{
-									borderColor,
-									height: canvasDimensions.height,
-									width: canvasDimensions.width,
-									backgroundColor: bgColor,
-								},
-							]}
+							className="border-2 border-dashed rounded-[10px] overflow-hidden"
+							style={{
+								borderColor,
+								height: canvasDimensions.height,
+								width: canvasDimensions.width,
+								backgroundColor: bgColor,
+							}}
 							{...panResponder.panHandlers}
 						>
 							<Svg
 								width={canvasDimensions.width}
 								height={canvasDimensions.height}
-								style={styles.svg}
+								className="flex-1"
 							>
 								{strokes.map((stroke, index) => (
 									<Path
@@ -193,18 +193,20 @@ export default function DrawingCanvas() {
 							</Svg>
 						</View>
 					</ViewShot>
-					<View style={styles.buttonContainer}>
+					<View className="flex-row mt-5 gap-[15px]">
 						<Pressable
-							style={[styles.button, { backgroundColor: buttonBgColor }]}
+							className="px-[30px] py-[10px] rounded-[20px] elevation-2 shadow-black/10 shadow-offset-[0,2] shadow-radius-3"
+							style={{ backgroundColor: buttonBgColor }}
 							onPress={clearCanvas}
 						>
-							<ThemedText style={styles.buttonText}>Clear</ThemedText>
+							<ThemedText className="text-base font-semibold">Clear</ThemedText>
 						</Pressable>
 						<Pressable
-							style={[styles.button, { backgroundColor: buttonBgColor }]}
+							className="px-[30px] py-[10px] rounded-[20px] elevation-2 shadow-black/10 shadow-offset-[0,2] shadow-radius-3"
+							style={{ backgroundColor: buttonBgColor }}
 							onPress={saveToLocal}
 						>
-							<ThemedText style={styles.buttonText}>Save</ThemedText>
+							<ThemedText className="text-base font-semibold">Save</ThemedText>
 						</Pressable>
 					</View>
 				</View>
@@ -212,43 +214,3 @@ export default function DrawingCanvas() {
 		</View>
 	);
 }
-
-const styles = StyleSheet.create({
-	container: {
-		flex: 1,
-		alignItems: "center",
-		justifyContent: "center",
-	},
-	canvasContent: {
-		alignItems: "center",
-	},
-	canvasContainer: {
-		borderWidth: 2,
-		borderStyle: "dashed",
-		borderRadius: 10,
-		overflow: "hidden",
-		backgroundColor: "transparent",
-	},
-	svg: {
-		flex: 1,
-	},
-	buttonContainer: {
-		flexDirection: "row",
-		marginTop: 20,
-		gap: 15,
-	},
-	button: {
-		paddingHorizontal: 30,
-		paddingVertical: 10,
-		borderRadius: 20,
-		elevation: 2,
-		shadowColor: "#000",
-		shadowOffset: { width: 0, height: 2 },
-		shadowOpacity: 0.1,
-		shadowRadius: 3,
-	},
-	buttonText: {
-		fontSize: 16,
-		fontWeight: "600",
-	},
-});

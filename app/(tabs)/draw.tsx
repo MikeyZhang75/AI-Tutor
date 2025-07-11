@@ -1,4 +1,4 @@
-import { StyleSheet, View } from "react-native";
+import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import DrawingCanvas from "@/components/DrawingCanvas";
 import { ThemedText } from "@/components/ThemedText";
@@ -8,45 +8,23 @@ export default function DrawScreen() {
 	const insets = useSafeAreaInsets();
 
 	return (
-		<ThemedView style={styles.container}>
-			<View style={[styles.content, { paddingBottom: insets.bottom + 80 }]}>
-				<View style={styles.header}>
-					<ThemedText type="title" style={styles.title}>
+		<ThemedView className="flex-1">
+			<View
+				className="flex-1 p-5"
+				style={{ paddingBottom: insets.bottom + 80 }}
+			>
+				<View className="mb-5">
+					<ThemedText type="title" className="mb-2.5 text-center">
 						Draw
 					</ThemedText>
-					<ThemedText style={styles.instructions}>
+					<ThemedText className="text-center opacity-70">
 						Draw within the bordered area below
 					</ThemedText>
 				</View>
-				<View style={styles.canvasWrapper}>
+				<View className="flex-1 justify-center">
 					<DrawingCanvas />
 				</View>
 			</View>
 		</ThemedView>
 	);
 }
-
-const styles = StyleSheet.create({
-	container: {
-		flex: 1,
-	},
-	content: {
-		flex: 1,
-		padding: 20,
-	},
-	header: {
-		marginBottom: 20,
-	},
-	title: {
-		marginBottom: 10,
-		textAlign: "center",
-	},
-	instructions: {
-		textAlign: "center",
-		opacity: 0.7,
-	},
-	canvasWrapper: {
-		flex: 1,
-		justifyContent: "center",
-	},
-});
