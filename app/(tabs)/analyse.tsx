@@ -2,29 +2,48 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRef, useState } from "react";
 import { ActivityIndicator, Modal, Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import DrawingCanvas from "@/components/DrawingCanvas";
-import { ThemedText } from "@/components/ThemedText";
+import DrawingCanvas, {
+	type DrawingCanvasRef,
+} from "@/components/DrawingCanvas";
+import { MathView } from "@/components/MathView";
+
 import { ThemedView } from "@/components/ThemedView";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { analyseService } from "@/eden/services/analyse.service";
 import { useColorScheme } from "@/lib/useColorScheme";
 
-const question = "Solve for x: 2x+5=13";
+// Example LaTeX math questions - you can change this to test different formulas
+const question = "Solve for $x$: $\\frac{2x + 5}{3} = \\frac{x - 1}{2}$";
+
+// More test examples (uncomment to test):
+// const question = "Find the derivative: $f(x) = 3x^2 + 2x - 5$";
+// const question = "Solve: $x^2 - 5x + 6 = 0$";
+// const question = "Simplify: $\\sqrt{16x^4}$";
+// const question = "Calculate: $\\int_0^2 (x^2 + 1) dx$";
 
 export default function AnalyseScreen() {
 	const insets = useSafeAreaInsets();
-	const canvasRef = useRef<{ captureCanvas: () => Promise<string> }>(null);
+	const canvasRef = useRef<DrawingCanvasRef>(null);
 	const [isLoading, setIsLoading] = useState(false);
 	const [showResult, setShowResult] = useState(false);
 	const [isCorrect, setIsCorrect] = useState(false);
 	const [resultMessage, setResultMessage] = useState("");
+	const [hasStrokes, setHasStrokes] = useState(false);
 	const { isDarkColorScheme } = useColorScheme();
 
 	const handleSubmit = async () => {
 		try {
-			if (!canvasRef.current?.captureCanvas) {
+			if (!canvasRef.current) {
 				setResultMessage("Unable to capture drawing");
+				setIsCorrect(false);
+				setShowResult(true);
+				return;
+			}
+
+			// Check if canvas has any strokes
+			if (!canvasRef.current.hasStrokes()) {
+				setResultMessage("Please write your solution before submitting");
 				setIsCorrect(false);
 				setShowResult(true);
 				return;
@@ -85,22 +104,17 @@ export default function AnalyseScreen() {
 			>
 				{/* Header Section */}
 				<View className="px-6 mb-6">
-					<View className="bg-blue-500/10 dark:bg-blue-400/20 rounded-2xl p-4 mb-4">
-						<ThemedText className="text-sm font-medium text-blue-600 dark:text-blue-400 mb-1">
+					<View className="bg-blue-500/10 dark:bg-blue-400/20 rounded-2xl p-4">
+						<Text className="text-sm font-medium text-blue-600 dark:text-blue-400 mb-1">
 							Math Problem
-						</ThemedText>
-						<ThemedText type="title" className="text-2xl">
-							{question}
-						</ThemedText>
+						</Text>
+						<MathView className="text-2xl">{question}</MathView>
 					</View>
-					<ThemedText className="text-center text-gray-500 dark:text-gray-400">
-						Write your solution below
-					</ThemedText>
 				</View>
 
 				{/* Canvas Section */}
 				<View className="flex-1 px-6">
-					<DrawingCanvas ref={canvasRef} />
+					<DrawingCanvas ref={canvasRef} onStrokesChange={setHasStrokes} />
 				</View>
 
 				{/* Submit Button */}
@@ -108,7 +122,7 @@ export default function AnalyseScreen() {
 					<Button
 						variant="default"
 						onPress={handleSubmit}
-						disabled={isLoading}
+						disabled={isLoading || !hasStrokes}
 						className="w-full"
 					>
 						{isLoading ? (
@@ -154,8 +168,7 @@ export default function AnalyseScreen() {
 						</View>
 
 						{/* Title */}
-						<ThemedText
-							type="subtitle"
+						<Text
 							className={`text-2xl mb-2 ${
 								isCorrect
 									? "text-green-500 dark:text-green-400"
@@ -163,12 +176,12 @@ export default function AnalyseScreen() {
 							}`}
 						>
 							{isCorrect ? "Correct!" : "Try Again"}
-						</ThemedText>
+						</Text>
 
 						{/* Message */}
-						<ThemedText className="text-center text-gray-600 dark:text-gray-300 mb-6">
+						<Text className="text-center text-gray-600 dark:text-gray-300 mb-6">
 							{resultMessage}
-						</ThemedText>
+						</Text>
 
 						{/* Action Button */}
 						<Button
