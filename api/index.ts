@@ -1,19 +1,26 @@
 import { swagger } from "@elysiajs/swagger";
-import { Elysia, t } from "elysia";
+import { Elysia, status, t } from "elysia";
 import OpenAI from "openai";
+import { zodTextFormat } from "openai/helpers/zod";
+import { z } from "zod";
 import { env } from "@/utils/env";
+
+const SolutionCorrectness = z.object({
+	is_correct: z.boolean(),
+});
 
 const app = new Elysia()
 	.use(swagger())
 	.post(
 		"/verify-solution",
 		async ({ body }) => {
+			console.log("Received request");
 			const openai = new OpenAI({
 				apiKey: env.OPENAI_API_KEY,
 				baseURL: env.OPENAI_BASE_URL,
 			});
 
-			const response = await openai.responses.create({
+			const response = await openai.responses.parse({
 				model: "o4-mini",
 				input: [
 					{
@@ -41,23 +48,7 @@ const app = new Elysia()
 					},
 				],
 				text: {
-					format: {
-						type: "json_schema",
-						name: "solution_correctness",
-						strict: true,
-						schema: {
-							type: "object",
-							properties: {
-								is_correct: {
-									type: "boolean",
-									description:
-										"Whether the user's answer is correct (True) or incorrect (False).",
-								},
-							},
-							required: ["is_correct"],
-							additionalProperties: false,
-						},
-					},
+					format: zodTextFormat(SolutionCorrectness, "solution_correctness"),
 				},
 				reasoning: {
 					effort: "medium",
@@ -66,9 +57,19 @@ const app = new Elysia()
 				store: false,
 			});
 
+			if (!response.output_parsed) {
+				return status(400, {
+					message: "Failed to parse response",
+					error: {
+						code: "PARSE_ERROR",
+						message: "Failed to parse response",
+					},
+				});
+			}
+
 			return {
 				success: true,
-				data: response.output_text,
+				data: response.output_parsed,
 			};
 		},
 		{

@@ -1,6 +1,6 @@
 import * as Clipboard from "expo-clipboard";
 import * as MediaLibrary from "expo-media-library";
-import { useRef, useState } from "react";
+import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import {
 	Alert,
 	type LayoutChangeEvent,
@@ -24,7 +24,11 @@ type Stroke = {
 	width: number;
 };
 
-export default function DrawingCanvas() {
+export type DrawingCanvasRef = {
+	captureCanvas: () => Promise<string>;
+};
+
+const DrawingCanvas = forwardRef<DrawingCanvasRef>((_, ref) => {
 	const [strokes, setStrokes] = useState<Stroke[]>([]);
 	const [currentStroke, setCurrentStroke] = useState<Point[]>([]);
 	const [canvasDimensions, setCanvasDimensions] = useState({
@@ -146,6 +150,20 @@ export default function DrawingCanvas() {
 		return path;
 	};
 
+	// Expose captureCanvas method through ref
+	useImperativeHandle(ref, () => ({
+		captureCanvas: async () => {
+			if (viewShotRef.current?.capture) {
+				// Capture as base64
+				const base64 = await viewShotRef.current.capture();
+				// Add data URL prefix for PNG image
+				const dataUrl = `data:image/png;base64,${base64}`;
+				return dataUrl;
+			}
+			throw new Error("Unable to capture canvas");
+		},
+	}));
+
 	return (
 		<View
 			className="flex-1 items-center justify-center"
@@ -158,6 +176,7 @@ export default function DrawingCanvas() {
 						options={{
 							format: "png",
 							quality: 1,
+							result: "base64",
 							width: canvasDimensions.width,
 							height: canvasDimensions.height,
 						}}
@@ -228,4 +247,8 @@ export default function DrawingCanvas() {
 			)}
 		</View>
 	);
-}
+});
+
+DrawingCanvas.displayName = "DrawingCanvas";
+
+export default DrawingCanvas;
