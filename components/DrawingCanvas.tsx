@@ -4,13 +4,13 @@ import {
 	Alert,
 	type LayoutChangeEvent,
 	PanResponder,
-	Pressable,
 	View,
 } from "react-native";
 import Svg, { Path } from "react-native-svg";
 import ViewShot from "react-native-view-shot";
-import { ThemedText } from "@/components/ThemedText";
+import { Text } from "@/components/ui/text";
 import { useThemeColor } from "@/hooks/useThemeColor";
+import { Button } from "./ui/button";
 
 type Point = {
 	x: number;
@@ -37,10 +37,6 @@ export default function DrawingCanvas() {
 	const borderColor = useThemeColor(
 		{ light: "#999999", dark: "#666666" },
 		"text",
-	);
-	const buttonBgColor = useThemeColor(
-		{ light: "#f0f0f0", dark: "#333333" },
-		"background",
 	);
 	const bgColor = useThemeColor({}, "background");
 
@@ -194,20 +190,12 @@ export default function DrawingCanvas() {
 						</View>
 					</ViewShot>
 					<View className="flex-row mt-5 gap-[15px]">
-						<Pressable
-							className="px-[30px] py-[10px] rounded-[20px] elevation-2 shadow-black/10 shadow-offset-[0,2] shadow-radius-3"
-							style={{ backgroundColor: buttonBgColor }}
-							onPress={clearCanvas}
-						>
-							<ThemedText className="text-base font-semibold">Clear</ThemedText>
-						</Pressable>
-						<Pressable
-							className="px-[30px] py-[10px] rounded-[20px] elevation-2 shadow-black/10 shadow-offset-[0,2] shadow-radius-3"
-							style={{ backgroundColor: buttonBgColor }}
-							onPress={saveToLocal}
-						>
-							<ThemedText className="text-base font-semibold">Save</ThemedText>
-						</Pressable>
+						<Button variant="destructive" onPress={clearCanvas}>
+							<Text className="text-base font-semibold">Clear</Text>
+						</Button>
+						<Button variant="default" onPress={saveToLocal}>
+							<Text className="text-base font-semibold">Save</Text>
+						</Button>
 					</View>
 				</View>
 			)}
