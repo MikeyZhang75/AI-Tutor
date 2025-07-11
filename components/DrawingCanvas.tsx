@@ -1,12 +1,5 @@
-import * as Clipboard from "expo-clipboard";
-import * as MediaLibrary from "expo-media-library";
 import { forwardRef, useImperativeHandle, useRef, useState } from "react";
-import {
-	Alert,
-	type LayoutChangeEvent,
-	PanResponder,
-	View,
-} from "react-native";
+import { type LayoutChangeEvent, PanResponder, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 import ViewShot from "react-native-view-shot";
 import { Text } from "@/components/ui/text";
@@ -97,42 +90,9 @@ const DrawingCanvas = forwardRef<DrawingCanvasRef>((_, ref) => {
 		currentStrokeRef.current = [];
 	};
 
-	const saveToLocal = async () => {
-		try {
-			// Request permission to save to photo library
-			const { status } = await MediaLibrary.requestPermissionsAsync();
-			if (status !== "granted") {
-				Alert.alert(
-					"Permission Required",
-					"Please grant permission to save images to your photo library.",
-				);
-				return;
-			}
-
-			// Capture the canvas as an image
-			if (viewShotRef.current?.capture) {
-				const uri = await viewShotRef.current.capture();
-
-				// Save to photo library
-				const asset = await MediaLibrary.createAssetAsync(uri);
-				await MediaLibrary.createAlbumAsync("AI Tutor", asset, false);
-
-				Alert.alert("Success", "Drawing saved to your photo library!");
-			}
-		} catch (error) {
-			console.error("Error saving image:", error);
-			Alert.alert("Error", "Failed to save drawing. Please try again.");
-		}
-	};
-
-	const copyToClipboard = async () => {
-		try {
-			const strokeData = JSON.stringify(strokes, null, 2);
-			await Clipboard.setStringAsync(strokeData);
-			Alert.alert("Success", "Stroke data copied to clipboard!");
-		} catch (error) {
-			console.error("Error copying to clipboard:", error);
-			Alert.alert("Error", "Failed to copy stroke data. Please try again.");
+	const undoLastStroke = () => {
+		if (strokes.length > 0) {
+			setStrokes((prev) => prev.slice(0, -1));
 		}
 	};
 
@@ -229,18 +189,11 @@ const DrawingCanvas = forwardRef<DrawingCanvasRef>((_, ref) => {
 							<Text className="text-base font-semibold">Clear</Text>
 						</Button>
 						<Button
-							variant="default"
-							onPress={saveToLocal}
-							disabled={strokes.length === 0}
-						>
-							<Text className="text-base font-semibold">Save</Text>
-						</Button>
-						<Button
 							variant="secondary"
-							onPress={copyToClipboard}
+							onPress={undoLastStroke}
 							disabled={strokes.length === 0}
 						>
-							<Text className="text-base font-semibold">Copy</Text>
+							<Text className="text-base font-semibold">Undo</Text>
 						</Button>
 					</View>
 				</View>

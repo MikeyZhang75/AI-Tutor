@@ -64,11 +64,9 @@ npm run reset-project  # Reset to blank Expo project
     - Multi-stroke support with persistent storage
     - Smooth curve rendering using quadratic Bezier paths
     - Clear button to reset the canvas
-    - Save button to export drawing as PNG to photo library
-    - Copy button to copy stroke data to clipboard
+    - Undo button to remove the last drawn stroke
     - Theme-aware styling and borders
     - Uses react-native-view-shot for image capture with base64 output
-    - Uses expo-media-library for saving to device photo library
     - Supports ref forwarding with `captureCanvas` method for programmatic capture
 - **Hooks**: Custom hooks in `/hooks/` for theme management and shared logic
   - `useColorScheme` - Uses NativeWind's color scheme hook
