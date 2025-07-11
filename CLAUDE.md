@@ -106,7 +106,7 @@ npm run reset-project  # Reset to blank Expo project
 
 ## Workflow Guidelines
 
-- Whenever one task is completed, ask for approval to modify @CLAUDE.md
+- Update CLAUDE.md automatically instead of asking approval to modify
 
 ## Git Workflow
 
