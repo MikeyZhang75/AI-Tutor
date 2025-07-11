@@ -1,5 +1,7 @@
+import * as MediaLibrary from "expo-media-library";
 import { useRef, useState } from "react";
 import {
+	Alert,
 	type LayoutChangeEvent,
 	PanResponder,
 	Pressable,
@@ -7,6 +9,7 @@ import {
 	View,
 } from "react-native";
 import Svg, { Path } from "react-native-svg";
+import ViewShot from "react-native-view-shot";
 import { ThemedText } from "@/components/ThemedText";
 import { useThemeColor } from "@/hooks/useThemeColor";
 
@@ -29,6 +32,7 @@ export default function DrawingCanvas() {
 		height: 0,
 	});
 	const currentStrokeRef = useRef<Point[]>([]);
+	const viewShotRef = useRef<ViewShot>(null);
 	const strokeColor = useThemeColor({}, "text");
 	const strokeColorRef = useRef(strokeColor);
 	const borderColor = useThemeColor(
@@ -39,6 +43,7 @@ export default function DrawingCanvas() {
 		{ light: "#f0f0f0", dark: "#333333" },
 		"background",
 	);
+	const bgColor = useThemeColor({}, "background");
 
 	// Update strokeColorRef when strokeColor changes
 	strokeColorRef.current = strokeColor;
@@ -92,6 +97,34 @@ export default function DrawingCanvas() {
 		currentStrokeRef.current = [];
 	};
 
+	const saveToLocal = async () => {
+		try {
+			// Request permission to save to photo library
+			const { status } = await MediaLibrary.requestPermissionsAsync();
+			if (status !== "granted") {
+				Alert.alert(
+					"Permission Required",
+					"Please grant permission to save images to your photo library.",
+				);
+				return;
+			}
+
+			// Capture the canvas as an image
+			if (viewShotRef.current?.capture) {
+				const uri = await viewShotRef.current.capture();
+
+				// Save to photo library
+				const asset = await MediaLibrary.createAssetAsync(uri);
+				await MediaLibrary.createAlbumAsync("AI Tutor", asset, false);
+
+				Alert.alert("Success", "Drawing saved to your photo library!");
+			}
+		} catch (error) {
+			console.error("Error saving image:", error);
+			Alert.alert("Error", "Failed to save drawing. Please try again.");
+		}
+	};
+
 	const pointsToPath = (points: Point[]) => {
 		if (points.length < 2) return "";
 
@@ -110,51 +143,70 @@ export default function DrawingCanvas() {
 		<View style={styles.container} onLayout={onCanvasLayout}>
 			{canvasDimensions.width > 0 && (
 				<View style={styles.canvasContent}>
-					<View
-						style={[
-							styles.canvasContainer,
-							{
-								borderColor,
-								height: canvasDimensions.height,
-								width: canvasDimensions.width,
-							},
-						]}
-						{...panResponder.panHandlers}
+					<ViewShot
+						ref={viewShotRef}
+						options={{
+							format: "png",
+							quality: 1,
+							width: canvasDimensions.width,
+							height: canvasDimensions.height,
+						}}
 					>
-						<Svg
-							width={canvasDimensions.width}
-							height={canvasDimensions.height}
-							style={styles.svg}
+						<View
+							style={[
+								styles.canvasContainer,
+								{
+									borderColor,
+									height: canvasDimensions.height,
+									width: canvasDimensions.width,
+									backgroundColor: bgColor,
+								},
+							]}
+							{...panResponder.panHandlers}
 						>
-							{strokes.map((stroke, index) => (
-								<Path
-									key={`stroke-${index}-${stroke.points.length}`}
-									d={pointsToPath(stroke.points)}
-									stroke={stroke.color || "#000000"}
-									strokeWidth={stroke.width || 2}
-									fill="none"
-									strokeLinecap="round"
-									strokeLinejoin="round"
-								/>
-							))}
-							{currentStroke.length > 0 && (
-								<Path
-									d={pointsToPath(currentStroke)}
-									stroke={strokeColor}
-									strokeWidth={2}
-									fill="none"
-									strokeLinecap="round"
-									strokeLinejoin="round"
-								/>
-							)}
-						</Svg>
+							<Svg
+								width={canvasDimensions.width}
+								height={canvasDimensions.height}
+								style={styles.svg}
+							>
+								{strokes.map((stroke, index) => (
+									<Path
+										key={`stroke-${index}-${stroke.points.length}`}
+										d={pointsToPath(stroke.points)}
+										stroke={stroke.color || "#000000"}
+										strokeWidth={stroke.width || 2}
+										fill="none"
+										strokeLinecap="round"
+										strokeLinejoin="round"
+									/>
+								))}
+								{currentStroke.length > 0 && (
+									<Path
+										d={pointsToPath(currentStroke)}
+										stroke={strokeColor}
+										strokeWidth={2}
+										fill="none"
+										strokeLinecap="round"
+										strokeLinejoin="round"
+									/>
+								)}
+							</Svg>
+						</View>
+					</ViewShot>
+					<View style={styles.buttonContainer}>
+						<Pressable
+							style={[styles.button, { backgroundColor: buttonBgColor }]}
+							onPress={clearCanvas}
+						>
+							<ThemedText style={styles.buttonText}>Clear</ThemedText>
+						</Pressable>
+						<Pressable
+							style={[styles.button, { backgroundColor: buttonBgColor }]}
+							onPress={saveToLocal}
+						>
+							<ThemedText style={styles.buttonText}>Save</ThemedText>
+						</Pressable>
 					</View>
-					<Pressable
-						style={[styles.clearButton, { backgroundColor: buttonBgColor }]}
-						onPress={clearCanvas}
-					>
-						<ThemedText style={styles.clearButtonText}>Clear</ThemedText>
-					</Pressable>
 				</View>
 			)}
 		</View>
@@ -180,8 +232,12 @@ const styles = StyleSheet.create({
 	svg: {
 		flex: 1,
 	},
-	clearButton: {
+	buttonContainer: {
+		flexDirection: "row",
 		marginTop: 20,
+		gap: 15,
+	},
+	button: {
 		paddingHorizontal: 30,
 		paddingVertical: 10,
 		borderRadius: 20,
@@ -191,7 +247,7 @@ const styles = StyleSheet.create({
 		shadowOpacity: 0.1,
 		shadowRadius: 3,
 	},
-	clearButtonText: {
+	buttonText: {
 		fontSize: 16,
 		fontWeight: "600",
 	},
