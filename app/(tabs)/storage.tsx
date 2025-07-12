@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { RefreshControl, ScrollView, View } from "react-native";
+import { ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedView } from "@/components/ThemedView";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,6 @@ import type { Progress } from "@/types/question.types";
 
 export default function StorageScreen() {
 	const [storageData, setStorageData] = useState<Progress[]>([]);
-	const [refreshing, setRefreshing] = useState(false);
 
 	const loadStorageData = useCallback(async () => {
 		try {
@@ -19,12 +18,6 @@ export default function StorageScreen() {
 			console.error("Error loading storage data:", error);
 		}
 	}, []);
-
-	const onRefresh = useCallback(async () => {
-		setRefreshing(true);
-		await loadStorageData();
-		setRefreshing(false);
-	}, [loadStorageData]);
 
 	useEffect(() => {
 		loadStorageData();
@@ -50,12 +43,7 @@ export default function StorageScreen() {
 
 	return (
 		<SafeAreaView className="flex-1 bg-gray-50 dark:bg-gray-900">
-			<ScrollView
-				className="flex-1"
-				refreshControl={
-					<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-				}
-			>
+			<ScrollView className="flex-1" bounces={false}>
 				<View className="p-4">
 					<View className="flex-row justify-between items-center mb-4">
 						<Text className="text-2xl font-bold">Storage Debug</Text>

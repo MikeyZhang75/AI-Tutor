@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { RefreshControl, ScrollView, View } from "react-native";
+import { ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { QuestionSetCard } from "@/components/QuestionSetCard";
 import { ThemedView } from "@/components/ThemedView";
@@ -15,7 +15,6 @@ export default function HomeScreen() {
 	const [progressData, setProgressData] = useState<
 		Record<string, QuestionSetProgress>
 	>({});
-	const [refreshing, setRefreshing] = useState(false);
 	const [questionSets, setQuestionSets] = useState<getQuestionSetsResponse>([]);
 	const [loading, setLoading] = useState(true);
 
@@ -49,20 +48,9 @@ export default function HomeScreen() {
 		loadProgress();
 	}, [loadQuestionSets, loadProgress]);
 
-	const onRefresh = useCallback(async () => {
-		setRefreshing(true);
-		await Promise.all([loadQuestionSets(), loadProgress()]);
-		setRefreshing(false);
-	}, [loadQuestionSets, loadProgress]);
-
 	return (
 		<SafeAreaView className="flex-1 bg-gray-50 dark:bg-gray-900">
-			<ScrollView
-				className="flex-1"
-				refreshControl={
-					<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-				}
-			>
+			<ScrollView className="flex-1" bounces={false}>
 				{/* Header */}
 				<ThemedView className="bg-blue-600 dark:bg-blue-700 pt-8 pb-8 rounded-b-3xl shadow-lg">
 					<View className="px-5">

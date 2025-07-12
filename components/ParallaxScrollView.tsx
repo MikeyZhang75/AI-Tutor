@@ -54,6 +54,7 @@ export default function ParallaxScrollView({
 				scrollEventThrottle={16}
 				scrollIndicatorInsets={{ bottom }}
 				contentContainerStyle={{ paddingBottom: bottom }}
+				bounces={false}
 			>
 				<Animated.View
 					className="h-[250px] overflow-hidden"

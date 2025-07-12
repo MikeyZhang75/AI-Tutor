@@ -140,7 +140,7 @@ export default function ResultsScreen() {
 
 	return (
 		<SafeAreaView className="flex-1 bg-gray-50 dark:bg-gray-900">
-			<ScrollView className="flex-1">
+			<ScrollView className="flex-1" bounces={false}>
 				{/* Header */}
 				<ThemedView
 					className={`pt-8 pb-8 ${isPassing ? "bg-green-600 dark:bg-green-700" : "bg-orange-600 dark:bg-orange-700"}`}

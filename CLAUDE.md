@@ -50,7 +50,6 @@ npm run lint       # Run ESLint
   - `(tabs)/_layout.tsx` - Tab navigation layout
   - `(tabs)/index.tsx` - Home tab showing available question sets
   - `(tabs)/storage.tsx` - Storage debug tab for viewing saved progress data
-  - `(tabs)/analyse.tsx` - Analyse tab with call-to-action for question sets
   - `question-set/[id].tsx` - Question set detail and start screen
   - `question/[setId].tsx` - Individual question solving screen
   - `results/[setId].tsx` - Results screen showing scores and answer feedback

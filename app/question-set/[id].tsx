@@ -71,7 +71,7 @@ export default function QuestionSetDetailScreen() {
 
 	return (
 		<SafeAreaView className="flex-1 bg-gray-50 dark:bg-gray-900">
-			<ScrollView className="flex-1">
+			<ScrollView className="flex-1" bounces={false}>
 				{/* Header */}
 				<ThemedView
 					className="pt-8 pb-8 rounded-b-3xl shadow-lg"
