@@ -1,11 +1,11 @@
 import { Link } from "expo-router";
 import { Pressable, View } from "react-native";
 import { Text } from "@/components/ui/text";
-import type { QuestionSet } from "@/types/question.types";
+import type { getQuestionSetsResponse } from "@/eden/services/question.service";
 import { ThemedView } from "./ThemedView";
 
 interface QuestionSetCardProps {
-	questionSet: QuestionSet;
+	questionSet: getQuestionSetsResponse[number];
 	progress?: {
 		completed: boolean;
 		highScore: number;
@@ -76,10 +76,10 @@ export function QuestionSetCard({
 					<View className="flex-row items-center justify-between">
 						<View className="flex-row items-center gap-3">
 							<Text className="text-xs text-gray-500 dark:text-gray-400">
-								📝 {questionSet.totalQuestions} questions
+								📝 {questionSet.total_questions} questions
 							</Text>
 							<Text className="text-xs text-gray-500 dark:text-gray-400">
-								⏱️ {questionSet.estimatedTime} min
+								⏱️ {questionSet.estimated_time} min
 							</Text>
 						</View>
 						{progress && (

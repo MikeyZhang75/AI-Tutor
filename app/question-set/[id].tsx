@@ -1,18 +1,52 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import { ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedView } from "@/components/ThemedView";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { useQuestions } from "@/contexts/QuestionContext";
-import { mockQuestionSets } from "@/data/mockQuestions";
+import {
+	type QuestionSet,
+	questionService,
+} from "@/eden/services/question.service";
 
 export default function QuestionSetDetailScreen() {
 	const { id } = useLocalSearchParams<{ id: string }>();
 	const router = useRouter();
 	const { startQuestionSet, currentProgress } = useQuestions();
+	const [questionSet, setQuestionSet] = useState<QuestionSet | null>(null);
+	const [loading, setLoading] = useState(true);
 
-	const questionSet = mockQuestionSets.find((set) => set.id === id);
+	useEffect(() => {
+		const loadQuestionSet = async () => {
+			if (!id) return;
+
+			try {
+				const response = await questionService.getQuestionSets({});
+				if (response.data?.data) {
+					const foundSet = response.data.data.find(
+						(set) => set.id.toString() === id,
+					);
+					setQuestionSet(foundSet || null);
+				}
+			} catch (error) {
+				console.error("Failed to load question set:", error);
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		loadQuestionSet();
+	}, [id]);
+
+	if (loading) {
+		return (
+			<ThemedView className="flex-1 justify-center items-center p-5">
+				<Text>Loading question set...</Text>
+			</ThemedView>
+		);
+	}
 
 	if (!questionSet) {
 		return (
@@ -80,13 +114,13 @@ export default function QuestionSetDetailScreen() {
 						<View className="bg-white dark:bg-gray-800 px-4 py-3 rounded-lg shadow-sm flex-1 min-w-[140px]">
 							<Text className="text-sm opacity-60 mb-1">Questions</Text>
 							<Text className="text-base leading-6 font-semibold">
-								{questionSet.totalQuestions}
+								{questionSet.total_questions}
 							</Text>
 						</View>
 						<View className="bg-white dark:bg-gray-800 px-4 py-3 rounded-lg shadow-sm flex-1 min-w-[140px]">
 							<Text className="text-sm opacity-60 mb-1">Duration</Text>
 							<Text className="text-base leading-6 font-semibold">
-								{questionSet.estimatedTime} min
+								{questionSet.estimated_time} min
 							</Text>
 						</View>
 						<View className="bg-white dark:bg-gray-800 px-4 py-3 rounded-lg shadow-sm flex-1 min-w-[140px]">

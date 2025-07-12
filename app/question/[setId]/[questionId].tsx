@@ -110,7 +110,7 @@ export default function QuestionScreen() {
 				<ThemedView className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm mb-4">
 					<View className="flex-row justify-between items-start mb-2">
 						<Text className="text-sm font-semibold opacity-60">
-							Question {questionIndex + 1} / {currentSet.totalQuestions}
+							Question {questionIndex + 1} / {currentSet.total_questions}
 						</Text>
 						<Text className="text-sm bg-blue-100 dark:bg-blue-900 px-2 py-1 rounded">
 							{currentQuestion.points} points

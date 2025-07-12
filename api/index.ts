@@ -1,16 +1,57 @@
 import { swagger } from "@elysiajs/swagger";
+import { eq } from "drizzle-orm";
 import { Elysia, status, t } from "elysia";
 import OpenAI from "openai";
 import { zodTextFormat } from "openai/helpers/zod";
 import { z } from "zod";
+import { db } from "@/database/neon";
+import { table } from "@/database/schema";
 import { env } from "@/utils/env";
-
-const SolutionCorrectness = z.object({
-	is_correct: z.boolean(),
-});
 
 const app = new Elysia()
 	.use(swagger())
+	.get(
+		"/question-sets",
+		async () => {
+			const questionSets = await db.select().from(table.questionSet);
+			return {
+				success: true,
+				data: questionSets,
+			};
+		},
+		{
+			detail: {
+				description:
+					"Retrieves all available question sets for the AI tutor application",
+			},
+		},
+	)
+	.get(
+		"/question-sets/:id/questions",
+		async ({ params }) => {
+			const questions = await db
+				.select()
+				.from(table.question)
+				.where(eq(table.question.set_id, Number(params.id)));
+
+			if (!questions) {
+				return status(404, {
+					success: false,
+					error: "Question set not found",
+				});
+			}
+			console.log(questions);
+			return {
+				success: true,
+				data: questions,
+			};
+		},
+		{
+			detail: {
+				description: "Retrieves all questions for a specific question set",
+			},
+		},
+	)
 	.post(
 		"/verify-solution",
 		async ({ body }) => {
@@ -18,6 +59,10 @@ const app = new Elysia()
 			const openai = new OpenAI({
 				apiKey: env.OPENAI_API_KEY,
 				baseURL: env.OPENAI_BASE_URL,
+			});
+
+			const SolutionCorrectness = z.object({
+				is_correct: z.boolean(),
 			});
 
 			const response = await openai.responses.parse({

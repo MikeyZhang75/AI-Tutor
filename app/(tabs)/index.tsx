@@ -4,7 +4,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { QuestionSetCard } from "@/components/QuestionSetCard";
 import { ThemedView } from "@/components/ThemedView";
 import { Text } from "@/components/ui/text";
-import { mockQuestionSets } from "@/data/mockQuestions";
+import {
+	type getQuestionSetsResponse,
+	questionService,
+} from "@/eden/services/question.service";
 import { progressStorage } from "@/lib/storage/progressStorage";
 import type { QuestionSetProgress } from "@/types/question.types";
 
@@ -13,6 +16,21 @@ export default function HomeScreen() {
 		Record<string, QuestionSetProgress>
 	>({});
 	const [refreshing, setRefreshing] = useState(false);
+	const [questionSets, setQuestionSets] = useState<getQuestionSetsResponse>([]);
+	const [loading, setLoading] = useState(true);
+
+	const loadQuestionSets = useCallback(async () => {
+		try {
+			const response = await questionService.getQuestionSets({});
+			if (response.data?.data) {
+				setQuestionSets(response.data.data);
+			}
+		} catch (error) {
+			console.error("Failed to load question sets:", error);
+		} finally {
+			setLoading(false);
+		}
+	}, []);
 
 	const loadProgress = useCallback(async () => {
 		const allProgress = await progressStorage.getAllSetProgress();
@@ -27,14 +45,15 @@ export default function HomeScreen() {
 	}, []);
 
 	useEffect(() => {
+		loadQuestionSets();
 		loadProgress();
-	}, [loadProgress]);
+	}, [loadQuestionSets, loadProgress]);
 
 	const onRefresh = useCallback(async () => {
 		setRefreshing(true);
-		await loadProgress();
+		await Promise.all([loadQuestionSets(), loadProgress()]);
 		setRefreshing(false);
-	}, [loadProgress]);
+	}, [loadQuestionSets, loadProgress]);
 
 	return (
 		<SafeAreaView className="flex-1 bg-gray-50 dark:bg-gray-900">
@@ -62,23 +81,33 @@ export default function HomeScreen() {
 						Available Question Sets
 					</Text>
 
-					{mockQuestionSets.map((set) => {
-						const progress = progressData[set.id];
-						return (
-							<QuestionSetCard
-								key={set.id}
-								questionSet={set}
-								progress={
-									progress
-										? {
-												completed: progress.completed,
-												highScore: progress.highScore,
-											}
-										: undefined
-								}
-							/>
-						);
-					})}
+					{loading ? (
+						<Text className="text-center py-8 text-gray-500">
+							Loading question sets...
+						</Text>
+					) : questionSets.length === 0 ? (
+						<Text className="text-center py-8 text-gray-500">
+							No question sets available
+						</Text>
+					) : (
+						questionSets.map((set) => {
+							const progress = progressData[set.id];
+							return (
+								<QuestionSetCard
+									key={set.id}
+									questionSet={set}
+									progress={
+										progress
+											? {
+													completed: progress.completed,
+													highScore: progress.highScore,
+												}
+											: undefined
+									}
+								/>
+							);
+						})
+					)}
 				</ThemedView>
 			</ScrollView>
 		</SafeAreaView>

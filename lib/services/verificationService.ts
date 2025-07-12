@@ -1,6 +1,7 @@
 import { analyseService } from "@/eden/services/analyse.service";
+import type { Question } from "@/eden/services/question.service";
 import { progressStorage } from "@/lib/storage/progressStorage";
-import type { Answer, Question } from "@/types/question.types";
+import type { Answer } from "@/types/question.types";
 
 interface VerificationTask {
 	answer: Answer;
@@ -78,7 +79,7 @@ class VerificationService {
 				isCorrect ? "correct" : "incorrect",
 				isCorrect
 					? "Great job! Your answer is correct."
-					: `Your answer is incorrect. The correct answer is: ${question.correctAnswer}`,
+					: `Your answer is incorrect. The correct answer is: ${question.correct_answer}`,
 			);
 		} catch (error) {
 			console.error("Error in verification process:", error);

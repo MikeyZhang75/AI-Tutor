@@ -8,14 +8,14 @@ import {
 	useRef,
 	useState,
 } from "react";
+import {
+	type Question,
+	type QuestionSet,
+	questionService,
+} from "@/eden/services/question.service";
 import { verificationService } from "@/lib/services/verificationService";
 import { progressStorage } from "@/lib/storage/progressStorage";
-import type {
-	Answer,
-	Progress,
-	Question,
-	QuestionSet,
-} from "@/types/question.types";
+import type { Answer, Progress } from "@/types/question.types";
 
 interface QuestionContextType {
 	// Current session state
@@ -69,19 +69,22 @@ export const QuestionProvider: React.FC<QuestionProviderProps> = ({
 	const startQuestionSet = useCallback(async (setId: string) => {
 		setIsLoading(true);
 		try {
-			// Mock implementation - will be replaced with actual API calls
-			const { mockQuestionSets, mockQuestions } = await import(
-				"@/data/mockQuestions"
+			// Fetch question sets from API
+			const questionSetsResponse = await questionService.getQuestionSets({});
+			const questionsResponse = await questionService.getQuestions({
+				id: Number(setId),
+			});
+
+			const questionSet = questionSetsResponse.data?.data?.find(
+				(set) => set.id.toString() === setId,
+			);
+			const questionsData = questionsResponse.data?.data?.filter(
+				(q) => q.set_id?.toString() === setId,
 			);
 
-			const questionSet = mockQuestionSets.find((set) => set.id === setId);
-			const questions = mockQuestions
-				.filter((q) => q.setId === setId)
-				.sort((a, b) => a.order - b.order);
-
-			if (questionSet && questions.length > 0) {
+			if (questionSet && questionsData && questionsData.length > 0) {
 				setCurrentSet(questionSet);
-				setCurrentQuestions(questions);
+				setCurrentQuestions(questionsData);
 				setCurrentQuestionIndex(0);
 
 				// Initialize progress
@@ -117,7 +120,7 @@ export const QuestionProvider: React.FC<QuestionProviderProps> = ({
 
 			const question = currentQuestions[currentQuestionIndex];
 			const newAnswer: Answer = {
-				questionId: question.id,
+				questionId: question.id.toString(),
 				userAnswer: answer,
 				submittedAt: new Date(),
 				verificationStatus: "pending",
@@ -151,7 +154,7 @@ export const QuestionProvider: React.FC<QuestionProviderProps> = ({
 				const verificationStatus =
 					await verificationService.getVerificationStatus(
 						currentProgress.setId,
-						question.id,
+						question.id.toString(),
 					);
 
 				if (

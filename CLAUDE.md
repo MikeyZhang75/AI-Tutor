@@ -100,12 +100,19 @@ npm run reset-project  # Reset to blank Expo project
 ### Backend Structure (Elysia API)
 
 - **API Server**: `/api/index.ts` - Main API server with OpenAPI documentation
+  - GET `/api/question-sets` - Retrieves all available question sets from database
+  - GET `/api/question-sets/:id/questions` - Retrieves all questions for a specific question set
   - POST `/api/verify-solution` - Analyzes student solution images using OpenAI vision model
   - GET `/api/swagger` - API documentation
   - Uses Zod schema validation for response parsing
+- **Database**: Neon PostgreSQL integration with Drizzle ORM
+  - `/database/neon.ts` - Database connection configuration
+  - `/database/schema.ts` - Database schema definitions (question sets and questions tables)
+  - `/drizzle.config.ts` - Drizzle configuration for migrations
 - **Type-Safe Client**: `/eden/` directory contains Eden client for type-safe API calls
   - `/eden/clients/eden.client.ts` - Eden client instance
   - `/eden/services/analyse.service.ts` - Solution verification service
+  - `/eden/services/question.service.ts` - Question set and questions fetching service
 
 ### Key Patterns
 
@@ -133,6 +140,7 @@ npm run reset-project  # Reset to blank Expo project
 - Biome is used for formatting/linting - prefer `bun run check:fix` over manual formatting
 - The API server must be running (`bun run start:api`) before starting the Expo app
 - Environment variables are required - check `/utils/env.ts` for required vars
+- Database connection uses Neon PostgreSQL - requires `DATABASE_URL` environment variable
 - All new components should support both light and dark themes using NativeWind's `dark:` variant
 - Use NativeWind classes for styling - avoid creating new StyleSheet objects
 - When adding new API endpoints, update both `/api/index.ts` and create corresponding Eden services
@@ -142,6 +150,8 @@ npm run reset-project  # Reset to blank Expo project
   - Custom theme colors matching the app's design system
   - Babel and Metro configuration for proper compilation
   - TypeScript support via nativewind-env.d.ts
+- Question sets and questions are now loaded from PostgreSQL database instead of mock data
+- Database schema uses snake_case for column names (e.g., `total_questions`, `estimated_time`)
 
 ## Git Workflow
 

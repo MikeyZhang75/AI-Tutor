@@ -25,7 +25,8 @@ export function MathView({
 	// Input: "Solve for $x$: $\frac{2x + 5}{3} = \frac{x - 1}{2}$"
 	// Output: "\text{Solve for }x\text{: }\frac{2x + 5}{3} = \frac{x - 1}{2}"
 
-	let expression = children;
+	// First, handle double backslashes from API/JSON escaping
+	let expression = children.replace(/\\\\/g, "\\");
 
 	// Replace inline math $...$ with the LaTeX content
 	// and wrap regular text in \text{}
@@ -37,9 +38,8 @@ export function MathView({
 		}
 		if (part.trim()) {
 			// This is regular text - wrap in \text{}
-			// Escape any special LaTeX characters in text
+			// Don't escape backslashes as they might be intentional LaTeX commands
 			const escapedText = part
-				.replace(/\\/g, "\\\\")
 				.replace(/{/g, "\\{")
 				.replace(/}/g, "\\}")
 				.replace(/_/g, "\\_")

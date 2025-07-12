@@ -1,11 +1,15 @@
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedView } from "@/components/ThemedView";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
-import { mockQuestionSets, mockQuestions } from "@/data/mockQuestions";
+import {
+	type Question,
+	type QuestionSet,
+	questionService,
+} from "@/eden/services/question.service";
 import { progressStorage } from "@/lib/storage/progressStorage";
 import type { Progress, QuestionSetProgress } from "@/types/question.types";
 
@@ -14,19 +18,43 @@ export default function ResultsScreen() {
 	const router = useRouter();
 	const [progress, setProgressState] = useState<Progress | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
+	const [questionSet, setQuestionSet] = useState<QuestionSet | null>(null);
+	const [questions, setQuestions] = useState<Question[]>([]);
 
-	const questionSet = useMemo(
-		() => mockQuestionSets.find((set) => set.id === setId),
-		[setId],
-	);
+	// Load question data from API
+	useEffect(() => {
+		const loadQuestionData = async () => {
+			if (!setId) return;
 
-	const questions = useMemo(
-		() =>
-			mockQuestions
-				.filter((q) => q.setId === setId)
-				.sort((a, b) => a.order - b.order),
-		[setId],
-	);
+			try {
+				// Fetch question set details
+				const setsResponse = await questionService.getQuestionSets({});
+				const apiQuestionSet = setsResponse.data?.data?.find(
+					(set) => set.id.toString() === setId,
+				);
+
+				if (apiQuestionSet) {
+					setQuestionSet(apiQuestionSet);
+				}
+
+				// Fetch questions
+				const questionsResponse = await questionService.getQuestions({
+					id: Number(setId),
+				});
+				const questionsData = questionsResponse.data?.data?.filter(
+					(q) => q.set_id?.toString() === setId,
+				);
+
+				if (questionsData) {
+					setQuestions(questionsData);
+				}
+			} catch (error) {
+				console.error("Failed to load question data:", error);
+			}
+		};
+
+		loadQuestionData();
+	}, [setId]);
 
 	const loadProgress = useCallback(async () => {
 		if (!setId) return;
@@ -41,7 +69,9 @@ export default function ResultsScreen() {
 			// Calculate score
 			const totalPoints = questions.reduce((sum, q) => sum + q.points, 0);
 			const earnedPoints = savedProgress.answers.reduce((sum, answer) => {
-				const question = questions.find((q) => q.id === answer.questionId);
+				const question = questions.find(
+					(q) => q.id.toString() === answer.questionId,
+				);
 				return (
 					sum +
 					(answer.verificationStatus === "correct" && question
@@ -163,7 +193,7 @@ export default function ResultsScreen() {
 					<Text className="text-xl font-bold mb-3">Question Details</Text>
 					{questions.map((question, index) => {
 						const answer = progress.answers.find(
-							(a) => a.questionId === question.id,
+							(a) => a.questionId === question.id.toString(),
 						);
 						const isCorrect = answer?.verificationStatus === "correct";
 						const isPending =
