@@ -10,6 +10,7 @@ import {
 	type QuestionSet,
 	questionService,
 } from "@/eden/services/question.service";
+import { useProgressPolling } from "@/lib/hooks/useProgressPolling";
 import { progressStorage } from "@/lib/storage/progressStorage";
 import type { Progress, QuestionSetProgress } from "@/types/question.types";
 
@@ -20,6 +21,7 @@ export default function ResultsScreen() {
 	const [isLoading, setIsLoading] = useState(true);
 	const [questionSet, setQuestionSet] = useState<QuestionSet | null>(null);
 	const [questions, setQuestions] = useState<Question[]>([]);
+	const [hasPendingAnswers, setHasPendingAnswers] = useState(false);
 
 	// Load question data from API
 	useEffect(() => {
@@ -56,19 +58,11 @@ export default function ResultsScreen() {
 		loadQuestionData();
 	}, [setId]);
 
-	const loadProgress = useCallback(async () => {
-		if (!setId) return;
-
-		setIsLoading(true);
-		const savedProgress = await progressStorage.getProgress(setId);
-
-		if (savedProgress) {
-			// Mark as completed
-			savedProgress.completedAt = new Date();
-
-			// Calculate score
+	// Calculate score based on current progress and questions
+	const calculateScore = useCallback(
+		(progressData: Progress) => {
 			const totalPoints = questions.reduce((sum, q) => sum + q.points, 0);
-			const earnedPoints = savedProgress.answers.reduce((sum, answer) => {
+			const earnedPoints = progressData.answers.reduce((sum, answer) => {
 				const question = questions.find(
 					(q) => q.id.toString() === answer.questionId,
 				);
@@ -80,24 +74,98 @@ export default function ResultsScreen() {
 				);
 			}, 0);
 
-			savedProgress.score = Math.round((earnedPoints / totalPoints) * 100);
-			savedProgress.totalPoints = totalPoints;
+			return {
+				score: Math.round((earnedPoints / totalPoints) * 100),
+				totalPoints,
+			};
+		},
+		[questions],
+	);
+
+	// Handle progress updates from polling
+	const handleProgressUpdate = useCallback(
+		(updatedProgress: Progress) => {
+			// Check if any answers are still pending
+			const pendingAnswers = updatedProgress.answers.some(
+				(answer) =>
+					answer.verificationStatus === "pending" ||
+					answer.verificationStatus === "verifying",
+			);
+			setHasPendingAnswers(pendingAnswers);
+
+			// Calculate and update score
+			if (questions.length > 0) {
+				const { score, totalPoints } = calculateScore(updatedProgress);
+				updatedProgress.score = score;
+				updatedProgress.totalPoints = totalPoints;
+			}
+
+			setProgressState(updatedProgress);
+
+			// If all verifications are complete, save final results
+			if (!pendingAnswers && updatedProgress.completedAt && setId) {
+				const setProgressData: QuestionSetProgress = {
+					setId: setId,
+					completed: true,
+					highScore: updatedProgress.score || 0,
+					lastAttemptDate: new Date(),
+					totalAttempts: 1,
+				};
+				progressStorage.saveSetProgress(setProgressData);
+			}
+		},
+		[setId, questions, calculateScore],
+	);
+
+	// Use progress polling hook
+	useProgressPolling({
+		setId: setId || "",
+		enabled: hasPendingAnswers && !isLoading,
+		onProgressUpdate: handleProgressUpdate,
+	});
+
+	const loadProgress = useCallback(async () => {
+		if (!setId) return;
+
+		setIsLoading(true);
+		const savedProgress = await progressStorage.getProgress(setId);
+
+		if (savedProgress) {
+			// Mark as completed
+			savedProgress.completedAt = new Date();
+
+			// Check for pending answers
+			const pendingAnswers = savedProgress.answers.some(
+				(answer) =>
+					answer.verificationStatus === "pending" ||
+					answer.verificationStatus === "verifying",
+			);
+			setHasPendingAnswers(pendingAnswers);
+
+			// Calculate score
+			if (questions.length > 0) {
+				const { score, totalPoints } = calculateScore(savedProgress);
+				savedProgress.score = score;
+				savedProgress.totalPoints = totalPoints;
+			}
 
 			setProgressState(savedProgress);
 
-			// Save completion to set progress
-			const setProgressData: QuestionSetProgress = {
-				setId: setId,
-				completed: true,
-				highScore: savedProgress.score,
-				lastAttemptDate: new Date(),
-				totalAttempts: 1, // In real app, increment this
-			};
-			await progressStorage.saveSetProgress(setProgressData);
+			// Save completion to set progress only if all verifications are complete
+			if (!pendingAnswers) {
+				const setProgressData: QuestionSetProgress = {
+					setId: setId,
+					completed: true,
+					highScore: savedProgress.score || 0,
+					lastAttemptDate: new Date(),
+					totalAttempts: 1,
+				};
+				await progressStorage.saveSetProgress(setProgressData);
+			}
 		}
 
 		setIsLoading(false);
-	}, [setId, questions]);
+	}, [setId, questions, calculateScore]);
 
 	useEffect(() => {
 		loadProgress();
@@ -190,7 +258,15 @@ export default function ResultsScreen() {
 					</View>
 
 					{/* Question Details */}
-					<Text className="text-xl font-bold mb-3">Question Details</Text>
+					<View className="flex-row items-center justify-between mb-3">
+						<Text className="text-xl font-bold">Question Details</Text>
+						{hasPendingAnswers && (
+							<View className="flex-row items-center gap-2">
+								<ActivityIndicator size="small" />
+								<Text className="text-sm opacity-70">Updating...</Text>
+							</View>
+						)}
+					</View>
 					{questions.map((question, index) => {
 						const answer = progress.answers.find(
 							(a) => a.questionId === question.id.toString(),

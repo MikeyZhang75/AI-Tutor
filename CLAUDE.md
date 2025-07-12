@@ -53,6 +53,8 @@ npm run lint       # Run ESLint
   - `question-set/[id].tsx` - Question set detail and start screen
   - `question/[setId].tsx` - Individual question solving screen
   - `results/[setId].tsx` - Results screen showing scores and answer feedback
+    - Live updates for pending verifications via progress polling
+    - Dynamic score calculation as verifications complete
 - **Styling**: NativeWind v4 for utility-first styling
   - `tailwind.config.js` - Tailwind configuration with custom theme colors
   - `global.css` - Global styles import
@@ -85,6 +87,7 @@ npm run lint       # Run ESLint
   - `useColorScheme` - Returns object with colorScheme, isDarkColorScheme, setColorScheme, and toggleColorScheme
   - `useThemeColor` - Returns theme-aware colors based on current color scheme
   - `useVerificationPolling` - Manages polling for answer verification status in background
+  - `useProgressPolling` - Polls for progress updates on results screen to show real-time verification status
 - **Context**: State management for question flow
   - `QuestionContext` - Manages current question set state, progress, and answer submission
     - Uses reducer pattern with `questionReducer` for centralized state management
@@ -102,6 +105,8 @@ npm run lint       # Run ESLint
   - `/lib/storage/mockStorage.ts` - Mock implementation for API responses
 - **Services**: Business logic and API integration
   - `/lib/services/verificationService.ts` - Background answer verification with retry logic
+    - Immediate verification start without queuing
+    - Race condition prevention for status updates
 - **Constants**: Design tokens in `/constants/Colors.ts`
 - **Types**: TypeScript type definitions in `/types/`
   - `question.types.ts` - Types for questions, progress, and verification

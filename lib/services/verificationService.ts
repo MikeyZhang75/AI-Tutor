@@ -10,35 +10,12 @@ interface VerificationTask {
 }
 
 class VerificationService {
-	private verificationQueue: VerificationTask[] = [];
-	private isProcessing = false;
+	private updateQueue: Promise<void> = Promise.resolve();
 
-	// Add answer to verification queue
+	// Add answer to verification queue - now starts verification immediately
 	async queueVerification(answer: Answer, question: Question, setId: string) {
-		this.verificationQueue.push({ answer, question, setId });
-
-		// Start processing if not already running
-		if (!this.isProcessing) {
-			this.processQueue();
-		}
-	}
-
-	// Process verification queue
-	private async processQueue() {
-		if (this.isProcessing || this.verificationQueue.length === 0) {
-			return;
-		}
-
-		this.isProcessing = true;
-
-		while (this.verificationQueue.length > 0) {
-			const task = this.verificationQueue.shift();
-			if (task) {
-				await this.verifyAnswer(task);
-			}
-		}
-
-		this.isProcessing = false;
+		// Start verification immediately without waiting
+		this.verifyAnswer({ answer, question, setId });
 	}
 
 	// Verify a single answer
@@ -93,17 +70,32 @@ class VerificationService {
 		status: Answer["verificationStatus"],
 		feedback?: string,
 	) {
-		const progress = await progressStorage.getProgress(setId);
-		if (!progress) return;
+		// Queue updates to prevent race conditions
+		this.updateQueue = this.updateQueue
+			.then(async () => {
+				const progress = await progressStorage.getProgress(setId);
+				if (!progress) {
+					console.error(`No progress found for setId: ${setId}`);
+					return;
+				}
 
-		const updatedAnswers = progress.answers.map((a) =>
-			a.questionId === questionId
-				? { ...a, verificationStatus: status, feedback }
-				: a,
-		);
+				const updatedAnswers = progress.answers.map((a) =>
+					a.questionId === questionId
+						? { ...a, verificationStatus: status, feedback }
+						: a,
+				);
 
-		const updatedProgress = { ...progress, answers: updatedAnswers };
-		await progressStorage.saveProgress(updatedProgress);
+				const updatedProgress = { ...progress, answers: updatedAnswers };
+				await progressStorage.saveProgress(updatedProgress);
+				console.log(
+					`Updated answer status for question ${questionId} to ${status}`,
+				);
+			})
+			.catch((error) => {
+				console.error("Error updating answer status:", error);
+			});
+
+		await this.updateQueue;
 	}
 
 	// Get verification status for a question
@@ -115,11 +107,6 @@ class VerificationService {
 		if (!progress) return null;
 
 		return progress.answers.find((a) => a.questionId === questionId) || null;
-	}
-
-	// Clear the verification queue
-	clearQueue() {
-		this.verificationQueue = [];
 	}
 }
 

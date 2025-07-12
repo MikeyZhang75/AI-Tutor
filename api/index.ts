@@ -55,7 +55,7 @@ const app = new Elysia()
 	.post(
 		"/verify-solution",
 		async ({ body }) => {
-			console.log("Received request");
+			console.log("POST /verify-solution");
 			const openai = new OpenAI({
 				apiKey: env.OPENAI_API_KEY,
 				baseURL: env.OPENAI_BASE_URL,
@@ -112,6 +112,8 @@ const app = new Elysia()
 					},
 				});
 			}
+
+			console.log("POST /verify-solution", "COMPLETED");
 
 			return {
 				success: true,

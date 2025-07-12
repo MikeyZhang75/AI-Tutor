@@ -39,20 +39,30 @@ export default function QuestionScreen() {
 		}
 	}, [currentSet, setId, startQuestionSet, isLoading, isExiting]);
 
+	// Track the current question ID to detect actual question changes
+	const previousQuestionIdRef = useRef<string | null>(null);
+
 	// Clear canvas and load existing strokes when question changes
 	useEffect(() => {
-		if (currentQuestion) {
-			const existingAnswer = getCurrentAnswer();
+		const currentQuestionId = currentQuestion?.id.toString() || null;
 
-			if (existingAnswer?.strokes) {
-				setInitialStrokes(existingAnswer.strokes);
-				setHasCanvasStrokes(true);
-			} else {
-				setInitialStrokes([]);
-				if (canvasRef.current) {
-					canvasRef.current.clear();
+		// Only process if this is an actual question change
+		if (currentQuestionId !== previousQuestionIdRef.current) {
+			previousQuestionIdRef.current = currentQuestionId;
+
+			if (currentQuestion) {
+				const existingAnswer = getCurrentAnswer();
+
+				if (existingAnswer?.strokes) {
+					setInitialStrokes(existingAnswer.strokes);
+					setHasCanvasStrokes(true);
+				} else {
+					setInitialStrokes([]);
+					if (canvasRef.current) {
+						canvasRef.current.clear();
+					}
+					setHasCanvasStrokes(false);
 				}
-				setHasCanvasStrokes(false);
 			}
 		}
 	}, [currentQuestion, getCurrentAnswer]);
