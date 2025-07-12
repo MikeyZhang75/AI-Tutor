@@ -83,11 +83,16 @@ npm run reset-project  # Reset to blank Expo project
   - `Button` - UI component with consistent rounded corners (rounded-lg) across all size variants
   - `QuestionSetCard` - Card component for displaying question set info on home screen
   - `MathView` - Component for rendering LaTeX math formulas using KaTeX
+    - Memoized with React.memo for performance optimization
+    - Uses useMemo for expression processing and style generation to prevent unnecessary recalculations
+    - Handles mixed text/LaTeX content with proper escaping and formatting
 - **Hooks**: All hooks have been migrated to `/lib/` directory
   - `useColorScheme` - Returns object with colorScheme, isDarkColorScheme, setColorScheme, and toggleColorScheme
   - `useThemeColor` - Returns theme-aware colors based on current color scheme
 - **Context**: State management for question flow
   - `QuestionContext` - Manages current question set state, progress, and answer submission
+    - Added `isExiting` flag to prevent question set reloading during exit transitions
+    - Improved state management to handle navigation edge cases
 - **Storage**: Persistent data storage using AsyncStorage
   - `/lib/storage/progressStorage.ts` - Manages saving/loading user progress
   - `/lib/storage/mockStorage.ts` - Mock implementation for API responses
@@ -103,6 +108,7 @@ npm run reset-project  # Reset to blank Expo project
   - GET `/api/question-sets` - Retrieves all available question sets from database
   - GET `/api/question-sets/:id/questions` - Retrieves all questions for a specific question set
   - POST `/api/verify-solution` - Analyzes student solution images using OpenAI vision model
+    - Returns both correctness status and feedback message in the response
   - GET `/api/swagger` - API documentation
   - Uses Zod schema validation for response parsing
 - **Database**: Neon PostgreSQL integration with Drizzle ORM

@@ -36,6 +36,7 @@ interface QuestionContextType {
 	isFirstQuestion: boolean;
 	currentQuestion: Question | null;
 	isLoading: boolean;
+	isExiting: boolean;
 }
 
 const QuestionContext = createContext<QuestionContextType | undefined>(
@@ -62,11 +63,14 @@ export const QuestionProvider: React.FC<QuestionProviderProps> = ({
 	const [currentProgress, setCurrentProgress] = useState<Progress | null>(null);
 	const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 	const [isLoading, setIsLoading] = useState(false);
+	const [isExiting, setIsExiting] = useState(false);
 	const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
 		null,
 	);
 
 	const startQuestionSet = useCallback(async (setId: string) => {
+		// Reset exit flag when starting a new set
+		setIsExiting(false);
 		setIsLoading(true);
 		try {
 			// Fetch question sets from API
@@ -216,6 +220,8 @@ export const QuestionProvider: React.FC<QuestionProviderProps> = ({
 	}, [currentQuestionIndex, currentProgress]);
 
 	const exitQuestionSet = useCallback(async () => {
+		// Set exit flag to prevent reloading
+		setIsExiting(true);
 		// Clear any active polling interval
 		if (pollingIntervalRef.current) {
 			clearInterval(pollingIntervalRef.current);
@@ -255,6 +261,7 @@ export const QuestionProvider: React.FC<QuestionProviderProps> = ({
 		isFirstQuestion,
 		currentQuestion,
 		isLoading,
+		isExiting,
 	};
 
 	return (

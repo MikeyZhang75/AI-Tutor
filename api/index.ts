@@ -29,6 +29,7 @@ const app = new Elysia()
 	.get(
 		"/question-sets/:id/questions",
 		async ({ params }) => {
+			console.log("GET /question-sets/:id/questions");
 			const questions = await db
 				.select()
 				.from(table.question)
@@ -40,7 +41,6 @@ const app = new Elysia()
 					error: "Question set not found",
 				});
 			}
-			console.log(questions);
 			return {
 				success: true,
 				data: questions,
@@ -63,6 +63,7 @@ const app = new Elysia()
 
 			const SolutionCorrectness = z.object({
 				is_correct: z.boolean(),
+				feedback: z.string(),
 			});
 
 			const response = await openai.responses.parse({

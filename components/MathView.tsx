@@ -1,3 +1,4 @@
+import { memo, useMemo } from "react";
 import { View } from "react-native";
 import Katex from "react-native-katex";
 import { Text } from "@/components/ui/text";
@@ -9,55 +10,54 @@ interface MathViewProps {
 	fallback?: boolean;
 }
 
-export function MathView({
+export const MathView = memo(function MathView({
 	children,
 	className = "",
 	fallback = false,
 }: MathViewProps) {
 	const { isDarkColorScheme } = useColorScheme();
 
-	// If fallback is true, render plain text
-	if (fallback) {
-		return <Text className={className}>{children}</Text>;
-	}
+	// Memoize the processed expression to prevent recalculation
+	const expression = useMemo(() => {
+		// Convert the mixed text/LaTeX content to a full LaTeX expression
+		// Input: "Solve for $x$: $\frac{2x + 5}{3} = \frac{x - 1}{2}$"
+		// Output: "\text{Solve for }x\text{: }\frac{2x + 5}{3} = \frac{x - 1}{2}"
 
-	// Convert the mixed text/LaTeX content to a full LaTeX expression
-	// Input: "Solve for $x$: $\frac{2x + 5}{3} = \frac{x - 1}{2}$"
-	// Output: "\text{Solve for }x\text{: }\frac{2x + 5}{3} = \frac{x - 1}{2}"
+		// First, handle double backslashes from API/JSON escaping
+		const expr = children.replace(/\\\\/g, "\\");
 
-	// First, handle double backslashes from API/JSON escaping
-	let expression = children.replace(/\\\\/g, "\\");
+		// Replace inline math $...$ with the LaTeX content
+		// and wrap regular text in \text{}
+		const parts = expr.split(/(\$[^$]+\$)/);
+		const processedParts = parts.map((part) => {
+			if (part.startsWith("$") && part.endsWith("$")) {
+				// This is LaTeX - remove dollar signs
+				return part.slice(1, -1);
+			}
+			if (part.trim()) {
+				// This is regular text - wrap in \text{}
+				// Don't escape backslashes as they might be intentional LaTeX commands
+				const escapedText = part
+					.replace(/{/g, "\\{")
+					.replace(/}/g, "\\}")
+					.replace(/_/g, "\\_")
+					.replace(/\^/g, "\\^")
+					.replace(/&/g, "\\&")
+					.replace(/%/g, "\\%")
+					.replace(/\$/g, "\\$")
+					.replace(/#/g, "\\#");
+				return `\\text{${escapedText}}`;
+			}
+			return "";
+		});
 
-	// Replace inline math $...$ with the LaTeX content
-	// and wrap regular text in \text{}
-	const parts = expression.split(/(\$[^$]+\$)/);
-	const processedParts = parts.map((part) => {
-		if (part.startsWith("$") && part.endsWith("$")) {
-			// This is LaTeX - remove dollar signs
-			return part.slice(1, -1);
-		}
-		if (part.trim()) {
-			// This is regular text - wrap in \text{}
-			// Don't escape backslashes as they might be intentional LaTeX commands
-			const escapedText = part
-				.replace(/{/g, "\\{")
-				.replace(/}/g, "\\}")
-				.replace(/_/g, "\\_")
-				.replace(/\^/g, "\\^")
-				.replace(/&/g, "\\&")
-				.replace(/%/g, "\\%")
-				.replace(/\$/g, "\\$")
-				.replace(/#/g, "\\#");
-			return `\\text{${escapedText}}`;
-		}
-		return "";
-	});
+		// Join all parts into a single LaTeX expression
+		return processedParts.join("");
+	}, [children]);
 
-	// Join all parts into a single LaTeX expression
-	expression = processedParts.join("");
-
-	// Custom CSS for KaTeX based on theme
-	const inlineStyle = `
+	// Memoize custom CSS for KaTeX based on theme
+	const inlineStyle = useMemo(
+		() => `
 		html, body {
 			display: flex;
 			background-color: transparent;
@@ -105,10 +105,17 @@ export function MathView({
 			maximum-scale: 1;
 			user-scalable: no;
 		}
-	`;
+	`,
+		[isDarkColorScheme],
+	);
 
 	console.log("Original text:", children);
 	console.log("Processed expression:", expression);
+
+	// If fallback is true, render plain text
+	if (fallback) {
+		return <Text className={className}>{children}</Text>;
+	}
 
 	return (
 		<View className={`h-20 min-h-[80px] ${className}`}>
@@ -129,4 +136,4 @@ export function MathView({
 			/>
 		</View>
 	);
-}
+});

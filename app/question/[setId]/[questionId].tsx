@@ -26,6 +26,7 @@ export default function QuestionScreen() {
 		exitQuestionSet,
 		isLoading,
 		startQuestionSet,
+		isExiting,
 	} = useQuestions();
 
 	const canvasRef = useRef<DrawingCanvasRef | null>(null);
@@ -37,10 +38,10 @@ export default function QuestionScreen() {
 
 	// Initialize question set if not loaded
 	useEffect(() => {
-		if (!currentSet && setId && !isLoading) {
+		if (!currentSet && setId && !isLoading && !isExiting) {
 			startQuestionSet(setId);
 		}
-	}, [currentSet, setId, startQuestionSet, isLoading]);
+	}, [currentSet, setId, startQuestionSet, isLoading, isExiting]);
 
 	// Clear canvas when question changes
 	useEffect(() => {
