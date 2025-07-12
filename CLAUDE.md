@@ -57,7 +57,7 @@ npm run reset-project  # Reset to blank Expo project
   - `(tabs)/storage.tsx` - Storage debug tab for viewing saved progress data
   - `(tabs)/analyse.tsx` - Analyse tab with call-to-action for question sets
   - `question-set/[id].tsx` - Question set detail and start screen
-  - `question/[setId]/[questionId].tsx` - Individual question solving screen
+  - `question/[setId].tsx` - Individual question solving screen
   - `results/[setId].tsx` - Results screen showing scores and answer feedback
 - **Styling**: NativeWind v4 for utility-first styling
   - `tailwind.config.js` - Tailwind configuration with custom theme colors

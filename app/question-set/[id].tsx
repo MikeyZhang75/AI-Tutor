@@ -14,7 +14,7 @@ import {
 export default function QuestionSetDetailScreen() {
 	const { id } = useLocalSearchParams<{ id: string }>();
 	const router = useRouter();
-	const { startQuestionSet, currentProgress } = useQuestions();
+	const { startQuestionSet } = useQuestions();
 	const [questionSet, setQuestionSet] = useState<QuestionSet | null>(null);
 	const [loading, setLoading] = useState(true);
 
@@ -59,9 +59,7 @@ export default function QuestionSetDetailScreen() {
 	const handleStart = async () => {
 		if (id) {
 			await startQuestionSet(id);
-			// Use the current question index from context (will be 0 for new sets)
-			const questionIndex = currentProgress?.currentQuestionIndex ?? 0;
-			router.push(`/question/${id}/${questionIndex}`);
+			router.push(`/question/${id}`);
 		}
 	};
 
