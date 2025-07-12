@@ -8,6 +8,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { useQuestions } from "@/contexts/QuestionContext";
+import type { Stroke } from "@/types/question.types";
 
 export default function QuestionScreen() {
 	const { setId } = useLocalSearchParams<{
@@ -15,26 +16,21 @@ export default function QuestionScreen() {
 	}>();
 	const router = useRouter();
 	const {
+		state: { currentSet, currentQuestionIndex, isLoading, isExiting, error },
 		currentQuestion,
-		currentSet,
-		submitAnswer,
-		nextQuestion,
-		previousQuestion,
 		isFirstQuestion,
 		isLastQuestion,
-		currentProgress,
+		submitAnswer,
+		navigateToQuestion,
 		exitQuestionSet,
-		isLoading,
 		startQuestionSet,
-		isExiting,
+		getCurrentAnswer,
 	} = useQuestions();
 
 	const canvasRef = useRef<DrawingCanvasRef | null>(null);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [hasCanvasStrokes, setHasCanvasStrokes] = useState(false);
-
-	// Use currentQuestionIndex from context instead of URL param
-	const questionIndex = currentProgress?.currentQuestionIndex ?? 0;
+	const [initialStrokes, setInitialStrokes] = useState<Stroke[]>([]);
 
 	// Initialize question set if not loaded
 	useEffect(() => {
@@ -43,14 +39,23 @@ export default function QuestionScreen() {
 		}
 	}, [currentSet, setId, startQuestionSet, isLoading, isExiting]);
 
-	// Clear canvas when question changes
+	// Clear canvas and load existing strokes when question changes
 	useEffect(() => {
-		if (canvasRef.current && currentQuestion) {
-			// Clear the canvas for new questions
-			canvasRef.current.clear();
-			setHasCanvasStrokes(false);
+		if (currentQuestion) {
+			const existingAnswer = getCurrentAnswer();
+
+			if (existingAnswer?.strokes) {
+				setInitialStrokes(existingAnswer.strokes);
+				setHasCanvasStrokes(true);
+			} else {
+				setInitialStrokes([]);
+				if (canvasRef.current) {
+					canvasRef.current.clear();
+				}
+				setHasCanvasStrokes(false);
+			}
 		}
-	}, [currentQuestion]);
+	}, [currentQuestion, getCurrentAnswer]);
 
 	const handleSubmit = async () => {
 		if (!canvasRef.current || !canvasRef.current.hasStrokes()) {
@@ -60,8 +65,9 @@ export default function QuestionScreen() {
 		setIsSubmitting(true);
 		try {
 			const base64Image = await canvasRef.current.captureCanvas();
+			const strokes = canvasRef.current.getStrokes();
 			if (base64Image) {
-				await submitAnswer(base64Image);
+				await submitAnswer(base64Image, strokes);
 
 				// Immediately advance to next question or results
 				if (!isLastQuestion) {
@@ -79,13 +85,11 @@ export default function QuestionScreen() {
 	};
 
 	const handleNext = () => {
-		nextQuestion();
-		// Don't navigate, just update state
+		navigateToQuestion("next");
 	};
 
 	const handlePrevious = () => {
-		previousQuestion();
-		// Don't navigate, just update state
+		navigateToQuestion("previous");
 	};
 
 	const handleExit = () => {
@@ -94,6 +98,17 @@ export default function QuestionScreen() {
 		router.dismissAll();
 		router.replace("/(tabs)");
 	};
+
+	if (error) {
+		return (
+			<ThemedView className="flex-1 justify-center items-center px-5">
+				<Text className="text-red-500 text-center mb-4">{error}</Text>
+				<Button onPress={() => router.back()}>
+					<Text>Go Back</Text>
+				</Button>
+			</ThemedView>
+		);
+	}
 
 	if (!currentQuestion || !currentSet) {
 		return (
@@ -111,7 +126,7 @@ export default function QuestionScreen() {
 				<ThemedView className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm mb-4">
 					<View className="flex-row justify-between items-start mb-2">
 						<Text className="text-sm font-semibold opacity-60">
-							Question {questionIndex + 1} / {currentSet.total_questions}
+							Question {currentQuestionIndex + 1} / {currentSet.total_questions}
 						</Text>
 						<Text className="text-sm bg-blue-100 dark:bg-blue-900 px-2 py-1 rounded">
 							{currentQuestion.points} points
@@ -126,6 +141,7 @@ export default function QuestionScreen() {
 						<DrawingCanvas
 							ref={canvasRef}
 							onStrokesChange={setHasCanvasStrokes}
+							initialStrokes={initialStrokes}
 						/>
 					</View>
 				</View>

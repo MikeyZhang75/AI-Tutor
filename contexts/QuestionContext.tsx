@@ -4,39 +4,38 @@ import {
 	createContext,
 	useCallback,
 	useContext,
-	useEffect,
-	useRef,
-	useState,
+	useMemo,
+	useReducer,
 } from "react";
 import {
 	type Question,
-	type QuestionSet,
 	questionService,
 } from "@/eden/services/question.service";
+import { useVerificationPolling } from "@/lib/hooks/useVerificationPolling";
+import {
+	initialQuestionState,
+	type QuestionState,
+	questionReducer,
+} from "@/lib/reducers/questionReducer";
 import { verificationService } from "@/lib/services/verificationService";
 import { progressStorage } from "@/lib/storage/progressStorage";
-import type { Answer, Progress } from "@/types/question.types";
+import type { Answer, Progress, Stroke } from "@/types/question.types";
 
 interface QuestionContextType {
-	// Current session state
-	currentSet: QuestionSet | null;
-	currentQuestions: Question[];
-	currentProgress: Progress | null;
-	currentQuestionIndex: number;
+	// State
+	state: QuestionState;
 
 	// Actions
 	startQuestionSet: (setId: string) => Promise<void>;
-	submitAnswer: (answer: string) => Promise<void>;
-	nextQuestion: () => void;
-	previousQuestion: () => void;
+	submitAnswer: (answer: string, strokes?: Stroke[]) => Promise<void>;
+	navigateToQuestion: (direction: "next" | "previous") => Promise<void>;
 	exitQuestionSet: () => void;
 
 	// Computed values
 	isLastQuestion: boolean;
 	isFirstQuestion: boolean;
 	currentQuestion: Question | null;
-	isLoading: boolean;
-	isExiting: boolean;
+	getCurrentAnswer: () => Answer | undefined;
 }
 
 const QuestionContext = createContext<QuestionContextType | undefined>(
@@ -58,211 +57,244 @@ interface QuestionProviderProps {
 export const QuestionProvider: React.FC<QuestionProviderProps> = ({
 	children,
 }) => {
-	const [currentSet, setCurrentSet] = useState<QuestionSet | null>(null);
-	const [currentQuestions, setCurrentQuestions] = useState<Question[]>([]);
-	const [currentProgress, setCurrentProgress] = useState<Progress | null>(null);
-	const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-	const [isLoading, setIsLoading] = useState(false);
-	const [isExiting, setIsExiting] = useState(false);
-	const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
-		null,
-	);
+	const [state, dispatch] = useReducer(questionReducer, initialQuestionState);
 
-	const startQuestionSet = useCallback(async (setId: string) => {
-		// Reset exit flag when starting a new set
-		setIsExiting(false);
-		setIsLoading(true);
-		try {
-			// Fetch question sets from API
-			const questionSetsResponse = await questionService.getQuestionSets({});
-			const questionsResponse = await questionService.getQuestions({
-				id: Number(setId),
-			});
+	// Extract commonly used values
+	const {
+		currentSet,
+		currentQuestions,
+		currentProgress,
+		currentQuestionIndex,
+	} = state;
 
-			const questionSet = questionSetsResponse.data?.data?.find(
-				(set) => set.id.toString() === setId,
-			);
-			const questionsData = questionsResponse.data?.data?.filter(
-				(q) => q.set_id?.toString() === setId,
-			);
+	// Computed values
+	const isLastQuestion = currentQuestionIndex === currentQuestions.length - 1;
+	const isFirstQuestion = currentQuestionIndex === 0;
+	const currentQuestion = currentQuestions[currentQuestionIndex] || null;
 
-			if (questionSet && questionsData && questionsData.length > 0) {
-				setCurrentSet(questionSet);
-				setCurrentQuestions(questionsData);
-				setCurrentQuestionIndex(0);
+	// Use verification polling hook
+	const { stopPolling } = useVerificationPolling({
+		setId: currentProgress?.setId || "",
+		questionId: currentQuestion?.id.toString() || "",
+		enabled: false, // We'll manually control when to poll
+		onVerificationComplete: (progress) => {
+			dispatch({ type: "SET_PROGRESS", payload: progress });
+		},
+	});
 
-				// Initialize progress
-				// Check for existing progress
+	const startQuestionSet = useCallback(
+		async (setId: string) => {
+			// Prevent re-initialization if already loaded
+			if (currentSet?.id.toString() === setId && currentProgress) {
+				return;
+			}
+
+			dispatch({ type: "SET_EXITING", payload: false });
+			dispatch({ type: "START_LOADING" });
+
+			try {
+				// Fetch data
+				const [questionSetsResponse, questionsResponse] = await Promise.all([
+					questionService.getQuestionSets({}),
+					questionService.getQuestions({ id: Number(setId) }),
+				]);
+
+				const questionSet = questionSetsResponse.data?.data?.find(
+					(set) => set.id.toString() === setId,
+				);
+				const questionsData = questionsResponse.data?.data?.filter(
+					(q) => q.set_id?.toString() === setId,
+				);
+
+				if (!questionSet || !questionsData || questionsData.length === 0) {
+					throw new Error("Question set not found or has no questions");
+				}
+
+				dispatch({
+					type: "SET_QUESTION_SET",
+					payload: { set: questionSet, questions: questionsData },
+				});
+
+				// Load or create progress
 				const existingProgress = await progressStorage.getProgress(setId);
 
 				if (existingProgress && existingProgress.answers.length > 0) {
-					// Resume from existing progress
-					setCurrentProgress(existingProgress);
-					setCurrentQuestionIndex(existingProgress.currentQuestionIndex);
+					dispatch({ type: "SET_PROGRESS", payload: existingProgress });
+					dispatch({
+						type: "SET_QUESTION_INDEX",
+						payload: existingProgress.currentQuestionIndex,
+					});
 				} else {
-					// Start new progress
-					const progress: Progress = {
+					const newProgress: Progress = {
 						setId,
 						currentQuestionIndex: 0,
 						answers: [],
 						startedAt: new Date(),
 					};
-					setCurrentProgress(progress);
-					await progressStorage.saveProgress(progress);
+					dispatch({ type: "SET_PROGRESS", payload: newProgress });
+					await progressStorage.saveProgress(newProgress);
 				}
+			} catch (error) {
+				const errorMessage =
+					error instanceof Error
+						? error.message
+						: "Failed to load question set";
+				dispatch({ type: "SET_ERROR", payload: errorMessage });
+			} finally {
+				dispatch({ type: "FINISH_LOADING" });
 			}
-		} catch (error) {
-			console.error("Error starting question set:", error);
-		} finally {
-			setIsLoading(false);
-		}
-	}, []);
+		},
+		[currentSet, currentProgress],
+	);
 
 	const submitAnswer = useCallback(
-		async (answer: string) => {
-			if (!currentProgress || !currentQuestions[currentQuestionIndex]) return;
+		async (answer: string, strokes?: Stroke[]) => {
+			if (!currentProgress || !currentQuestion) {
+				dispatch({ type: "SET_ERROR", payload: "No active question session" });
+				return;
+			}
 
-			const question = currentQuestions[currentQuestionIndex];
 			const newAnswer: Answer = {
-				questionId: question.id.toString(),
+				questionId: currentQuestion.id.toString(),
 				userAnswer: answer,
+				strokes,
 				submittedAt: new Date(),
 				verificationStatus: "pending",
 				attemptNumber: 1,
 			};
 
-			// Update progress with new answer
+			// Update state
+			dispatch({ type: "ADD_OR_UPDATE_ANSWER", payload: newAnswer });
+
+			// Save to storage (get updated progress from state)
 			const updatedProgress = {
 				...currentProgress,
-				answers: [...currentProgress.answers, newAnswer],
+				answers: [
+					...currentProgress.answers.filter(
+						(a) => a.questionId !== newAnswer.questionId,
+					),
+					newAnswer,
+				],
 			};
-			setCurrentProgress(updatedProgress);
-
-			// Save to storage
 			await progressStorage.saveProgress(updatedProgress);
 
-			// Queue background verification
+			// Queue verification
 			await verificationService.queueVerification(
 				newAnswer,
-				question,
+				currentQuestion,
 				currentProgress.setId,
 			);
 
-			// Clear any existing polling interval
-			if (pollingIntervalRef.current) {
-				clearInterval(pollingIntervalRef.current);
-			}
+			// Start polling for verification
+			stopPolling();
+			// Manually start polling by creating a new instance
+			const pollInterval = setInterval(async () => {
+				const status = await verificationService.getVerificationStatus(
+					currentProgress.setId,
+					currentQuestion.id.toString(),
+				);
 
-			// Poll for verification status updates
-			pollingIntervalRef.current = setInterval(async () => {
-				const verificationStatus =
-					await verificationService.getVerificationStatus(
-						currentProgress.setId,
-						question.id.toString(),
-					);
-
-				if (
-					verificationStatus &&
-					verificationStatus.verificationStatus !== "pending"
-				) {
-					if (pollingIntervalRef.current) {
-						clearInterval(pollingIntervalRef.current);
-						pollingIntervalRef.current = null;
-					}
-
-					// Update local state with verification result
+				if (status && status.verificationStatus !== "pending") {
+					clearInterval(pollInterval);
 					const latestProgress = await progressStorage.getProgress(
 						currentProgress.setId,
 					);
 					if (latestProgress) {
-						setCurrentProgress(latestProgress);
+						dispatch({ type: "SET_PROGRESS", payload: latestProgress });
 					}
 				}
 			}, 1000);
 		},
-		[currentProgress, currentQuestions, currentQuestionIndex],
+		[currentProgress, currentQuestion, stopPolling],
 	);
 
-	const nextQuestion = useCallback(async () => {
-		if (currentQuestionIndex < currentQuestions.length - 1 && currentProgress) {
-			// Clear any active polling interval when moving to next question
-			if (pollingIntervalRef.current) {
-				clearInterval(pollingIntervalRef.current);
-				pollingIntervalRef.current = null;
+	const navigateToQuestion = useCallback(
+		async (direction: "next" | "previous") => {
+			if (!currentSet || !currentProgress) return;
+
+			const canNavigateNext = direction === "next" && !isLastQuestion;
+			const canNavigatePrevious = direction === "previous" && !isFirstQuestion;
+
+			if (!canNavigateNext && !canNavigatePrevious) return;
+
+			stopPolling();
+
+			// Get latest progress from storage
+			const latestProgress = await progressStorage.getProgress(
+				currentSet.id.toString(),
+			);
+			if (!latestProgress) {
+				dispatch({ type: "SET_ERROR", payload: "Failed to load progress" });
+				return;
 			}
-			const newIndex = currentQuestionIndex + 1;
-			setCurrentQuestionIndex(newIndex);
+
+			const newIndex =
+				direction === "next"
+					? currentQuestionIndex + 1
+					: currentQuestionIndex - 1;
+
+			// Update state
+			dispatch({ type: "SET_PROGRESS", payload: latestProgress });
+			dispatch({ type: "SET_QUESTION_INDEX", payload: newIndex });
+
+			// Save updated progress
 			const updatedProgress = {
-				...currentProgress,
+				...latestProgress,
 				currentQuestionIndex: newIndex,
 			};
-			setCurrentProgress(updatedProgress);
 			await progressStorage.saveProgress(updatedProgress);
-		}
-	}, [currentQuestionIndex, currentQuestions.length, currentProgress]);
+		},
+		[
+			currentSet,
+			currentProgress,
+			currentQuestionIndex,
+			isLastQuestion,
+			isFirstQuestion,
+			stopPolling,
+		],
+	);
 
-	const previousQuestion = useCallback(async () => {
-		if (currentQuestionIndex > 0 && currentProgress) {
-			// Clear any active polling interval when moving to previous question
-			if (pollingIntervalRef.current) {
-				clearInterval(pollingIntervalRef.current);
-				pollingIntervalRef.current = null;
-			}
-			const newIndex = currentQuestionIndex - 1;
-			setCurrentQuestionIndex(newIndex);
-			const updatedProgress = {
-				...currentProgress,
-				currentQuestionIndex: newIndex,
-			};
-			setCurrentProgress(updatedProgress);
-			await progressStorage.saveProgress(updatedProgress);
-		}
-	}, [currentQuestionIndex, currentProgress]);
+	const exitQuestionSet = useCallback(() => {
+		dispatch({ type: "SET_EXITING", payload: true });
+		stopPolling();
+		dispatch({ type: "RESET_SESSION" });
+	}, [stopPolling]);
 
-	const exitQuestionSet = useCallback(async () => {
-		// Set exit flag to prevent reloading
-		setIsExiting(true);
-		// Clear any active polling interval
-		if (pollingIntervalRef.current) {
-			clearInterval(pollingIntervalRef.current);
-			pollingIntervalRef.current = null;
-		}
-		// Don't clear storage - keep progress for resuming
-		setCurrentSet(null);
-		setCurrentQuestions([]);
-		setCurrentProgress(null);
-		setCurrentQuestionIndex(0);
-	}, []);
+	const getCurrentAnswer = useCallback(() => {
+		if (!currentProgress || !currentQuestion) return undefined;
 
-	// Clean up polling interval on unmount
-	useEffect(() => {
-		return () => {
-			if (pollingIntervalRef.current) {
-				clearInterval(pollingIntervalRef.current);
-			}
-		};
-	}, []);
+		// Get the most recent answer for the current question
+		const answers = currentProgress.answers.filter(
+			(answer) => answer.questionId === currentQuestion.id.toString(),
+		);
+		return answers[answers.length - 1];
+	}, [currentProgress, currentQuestion]);
 
-	const isLastQuestion = currentQuestionIndex === currentQuestions.length - 1;
-	const isFirstQuestion = currentQuestionIndex === 0;
-	const currentQuestion = currentQuestions[currentQuestionIndex] || null;
-
-	const value: QuestionContextType = {
-		currentSet,
-		currentQuestions,
-		currentProgress,
-		currentQuestionIndex,
-		startQuestionSet,
-		submitAnswer,
-		nextQuestion,
-		previousQuestion,
-		exitQuestionSet,
-		isLastQuestion,
-		isFirstQuestion,
-		currentQuestion,
-		isLoading,
-		isExiting,
-	};
+	// Memoize context value to prevent unnecessary re-renders
+	const value = useMemo<QuestionContextType>(
+		() => ({
+			state,
+			startQuestionSet,
+			submitAnswer,
+			navigateToQuestion,
+			exitQuestionSet,
+			isLastQuestion,
+			isFirstQuestion,
+			currentQuestion,
+			getCurrentAnswer,
+		}),
+		[
+			state,
+			startQuestionSet,
+			submitAnswer,
+			navigateToQuestion,
+			exitQuestionSet,
+			isLastQuestion,
+			isFirstQuestion,
+			currentQuestion,
+			getCurrentAnswer,
+		],
+	);
 
 	return (
 		<QuestionContext.Provider value={value}>

@@ -16,6 +16,7 @@ This is an AI-powered tutoring mobile application built with Expo (React Native)
 - **Question Set System**: Sequential question sets with background answer verification
 - **Progress Tracking**: Persistent storage of user progress and answers across sessions
 - **Asynchronous Verification**: Answers are verified in the background while users continue to next questions
+- **Drawing Persistence**: User drawings are saved and restored when navigating between questions
 
 ## Commands
 
@@ -39,12 +40,6 @@ npm run web      # Web development
 # Format and lint code
 bun run check:fix  # Run Biome formatter/linter with auto-fix
 npm run lint       # Run ESLint
-```
-
-### Project Reset
-
-```bash
-npm run reset-project  # Reset to blank Expo project
 ```
 
 ## Architecture
@@ -77,9 +72,10 @@ npm run reset-project  # Reset to blank Expo project
     - Theme-aware styling and borders
     - Full-width responsive layout
     - Uses react-native-view-shot for image capture with base64 output
-    - Supports ref forwarding with `captureCanvas` and `hasStrokes` methods
+    - Supports ref forwarding with `captureCanvas`, `hasStrokes`, `clear`, and `getStrokes` methods
     - Integrates expo-media-library for photo saving functionality
     - Self-contained state management without external coupling
+    - Supports loading initial strokes via `initialStrokes` prop for answer persistence
   - `Button` - UI component with consistent rounded corners (rounded-lg) across all size variants
   - `QuestionSetCard` - Card component for displaying question set info on home screen
   - `MathView` - Component for rendering LaTeX math formulas using KaTeX
@@ -89,10 +85,19 @@ npm run reset-project  # Reset to blank Expo project
 - **Hooks**: All hooks have been migrated to `/lib/` directory
   - `useColorScheme` - Returns object with colorScheme, isDarkColorScheme, setColorScheme, and toggleColorScheme
   - `useThemeColor` - Returns theme-aware colors based on current color scheme
+  - `useVerificationPolling` - Manages polling for answer verification status in background
 - **Context**: State management for question flow
   - `QuestionContext` - Manages current question set state, progress, and answer submission
-    - Added `isExiting` flag to prevent question set reloading during exit transitions
-    - Improved state management to handle navigation edge cases
+    - Uses reducer pattern with `questionReducer` for centralized state management
+    - Provides actions for question navigation, answer submission, and progress tracking
+    - Handles stroke persistence for drawing answers
+    - Integrates with verification polling for background answer checks
+    - Manages error states and loading indicators
+- **Reducers**: State management logic in `/lib/reducers/`
+  - `questionReducer` - Centralized state management for question flow
+    - Handles all question-related state updates
+    - Manages loading, error, and exit states
+    - Updates progress and answer tracking
 - **Storage**: Persistent data storage using AsyncStorage
   - `/lib/storage/progressStorage.ts` - Manages saving/loading user progress
   - `/lib/storage/mockStorage.ts` - Mock implementation for API responses
@@ -101,6 +106,8 @@ npm run reset-project  # Reset to blank Expo project
 - **Constants**: Design tokens in `/constants/Colors.ts`
 - **Types**: TypeScript type definitions in `/types/`
   - `question.types.ts` - Types for questions, progress, and verification
+    - Added `Stroke` and `Point` types for drawing persistence
+    - Extended `Answer` type to include optional strokes array
 
 ### Backend Structure (Elysia API)
 

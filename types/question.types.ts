@@ -1,6 +1,18 @@
+export type Point = {
+	x: number;
+	y: number;
+};
+
+export type Stroke = {
+	points: Point[];
+	color: string;
+	width: number;
+};
+
 export interface Answer {
 	questionId: string;
-	userAnswer: string;
+	userAnswer: string; // Still used for backward compatibility and verification
+	strokes?: Stroke[]; // New field to store stroke data
 	submittedAt: Date;
 	verificationStatus: "pending" | "verifying" | "correct" | "incorrect";
 	feedback?: string;

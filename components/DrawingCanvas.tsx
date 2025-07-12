@@ -23,32 +23,24 @@ import ViewShot, { captureRef } from "react-native-view-shot";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { useThemeColor } from "@/lib/useThemeColor";
-
-type Point = {
-	x: number;
-	y: number;
-};
-
-type Stroke = {
-	points: Point[];
-	color: string;
-	width: number;
-};
+import type { Point, Stroke } from "@/types/question.types";
 
 export type DrawingCanvasRef = {
 	captureCanvas: () => Promise<string>;
 	hasStrokes: () => boolean;
 	clear: () => void;
+	getStrokes: () => Stroke[];
 };
 
 type DrawingCanvasProps = {
 	onStrokesChange?: (hasStrokes: boolean) => void;
 	height?: number;
+	initialStrokes?: Stroke[];
 };
 
 const DrawingCanvas = forwardRef<DrawingCanvasRef, DrawingCanvasProps>(
-	({ onStrokesChange, height = 300 }, ref) => {
-		const [strokes, setStrokes] = useState<Stroke[]>([]);
+	({ onStrokesChange, height = 300, initialStrokes = [] }, ref) => {
+		const [strokes, setStrokes] = useState<Stroke[]>(initialStrokes);
 		const [currentStroke, setCurrentStroke] = useState<Point[]>([]);
 		const [canvasDimensions, setCanvasDimensions] = useState({
 			width: 0,
@@ -75,6 +67,11 @@ const DrawingCanvas = forwardRef<DrawingCanvasRef, DrawingCanvasProps>(
 		useEffect(() => {
 			strokeColorRef.current = strokeColor;
 		}, [strokeColor]);
+
+		// Update strokes when initialStrokes prop changes
+		useEffect(() => {
+			setStrokes(initialStrokes);
+		}, [initialStrokes]);
 
 		// Animate placeholder when strokes change
 		useEffect(() => {
@@ -206,6 +203,7 @@ const DrawingCanvas = forwardRef<DrawingCanvasRef, DrawingCanvasProps>(
 			},
 			hasStrokes: () => strokes.length > 0,
 			clear: clearCanvas,
+			getStrokes: () => strokes,
 		}));
 
 		return (

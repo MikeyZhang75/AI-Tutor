@@ -20,7 +20,11 @@ export const progressStorage = {
 		try {
 			const key = `${PROGRESS_KEY_PREFIX}${setId}`;
 			const data = await AsyncStorage.getItem(key);
-			return data ? JSON.parse(data) : null;
+			if (data) {
+				const progress = JSON.parse(data);
+				return progress;
+			}
+			return null;
 		} catch (error) {
 			console.error("Error getting progress:", error);
 			return null;
