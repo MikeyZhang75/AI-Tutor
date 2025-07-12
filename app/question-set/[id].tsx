@@ -9,7 +9,7 @@ import { mockQuestionSets } from "@/data/mockQuestions";
 export default function QuestionSetDetailScreen() {
 	const { id } = useLocalSearchParams<{ id: string }>();
 	const router = useRouter();
-	const { startQuestionSet } = useQuestions();
+	const { startQuestionSet, currentProgress } = useQuestions();
 
 	const questionSet = mockQuestionSets.find((set) => set.id === id);
 
@@ -24,7 +24,9 @@ export default function QuestionSetDetailScreen() {
 	const handleStart = async () => {
 		if (id) {
 			await startQuestionSet(id);
-			router.push(`/question/${id}/0`);
+			// Use the current question index from context (will be 0 for new sets)
+			const questionIndex = currentProgress?.currentQuestionIndex ?? 0;
+			router.push(`/question/${id}/${questionIndex}`);
 		}
 	};
 

@@ -38,6 +38,7 @@ type Stroke = {
 export type DrawingCanvasRef = {
 	captureCanvas: () => Promise<string>;
 	hasStrokes: () => boolean;
+	clear: () => void;
 };
 
 type DrawingCanvasProps = {
@@ -204,6 +205,7 @@ const DrawingCanvas = forwardRef<DrawingCanvasRef, DrawingCanvasProps>(
 				throw new Error("Unable to capture canvas");
 			},
 			hasStrokes: () => strokes.length > 0,
+			clear: clearCanvas,
 		}));
 
 		return (

@@ -10,9 +10,8 @@ import { Text } from "@/components/ui/text";
 import { useQuestions } from "@/contexts/QuestionContext";
 
 export default function QuestionScreen() {
-	const { setId, questionId } = useLocalSearchParams<{
+	const { setId } = useLocalSearchParams<{
 		setId: string;
-		questionId: string;
 	}>();
 	const router = useRouter();
 	const {
@@ -33,10 +32,8 @@ export default function QuestionScreen() {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [hasCanvasStrokes, setHasCanvasStrokes] = useState(false);
 
-	const questionIndex = Number.parseInt(questionId || "0");
-	const currentAnswer = currentProgress?.answers.find(
-		(a) => a.questionId === currentQuestion?.id,
-	);
+	// Use currentQuestionIndex from context instead of URL param
+	const questionIndex = currentProgress?.currentQuestionIndex ?? 0;
 
 	// Initialize question set if not loaded
 	useEffect(() => {
@@ -44,6 +41,15 @@ export default function QuestionScreen() {
 			startQuestionSet(setId);
 		}
 	}, [currentSet, setId, startQuestionSet, isLoading]);
+
+	// Clear canvas when question changes
+	useEffect(() => {
+		if (canvasRef.current && currentQuestion) {
+			// Clear the canvas for new questions
+			canvasRef.current.clear();
+			setHasCanvasStrokes(false);
+		}
+	}, [currentQuestion]);
 
 	const handleSubmit = async () => {
 		if (!canvasRef.current || !canvasRef.current.hasStrokes()) {
@@ -56,15 +62,13 @@ export default function QuestionScreen() {
 			if (base64Image) {
 				await submitAnswer(base64Image);
 
-				// Auto-advance to next question after a short delay
-				setTimeout(() => {
-					if (!isLastQuestion) {
-						handleNext();
-					} else {
-						// Navigate to results screen
-						router.push(`/results/${setId}`);
-					}
-				}, 500);
+				// Immediately advance to next question or results
+				if (!isLastQuestion) {
+					handleNext();
+				} else {
+					// Navigate to results screen
+					router.push(`/results/${setId}`);
+				}
 			}
 		} catch (error) {
 			console.error("Error submitting answer:", error);
@@ -75,14 +79,12 @@ export default function QuestionScreen() {
 
 	const handleNext = () => {
 		nextQuestion();
-		const nextIndex = questionIndex + 1;
-		router.replace(`/question/${setId}/${nextIndex}`);
+		// Don't navigate, just update state
 	};
 
 	const handlePrevious = () => {
 		previousQuestion();
-		const prevIndex = questionIndex - 1;
-		router.replace(`/question/${setId}/${prevIndex}`);
+		// Don't navigate, just update state
 	};
 
 	const handleExit = () => {
@@ -135,50 +137,32 @@ export default function QuestionScreen() {
 					<MathView>{currentQuestion.text}</MathView>
 				</ThemedView>
 
-				{/* Canvas Area or Answer Status */}
-				{currentAnswer ? (
-					<ThemedView className="bg-green-50 dark:bg-green-900/30 p-4 rounded-lg">
-						<Text className="text-base font-semibold text-green-800 dark:text-green-200 mb-2">
-							✓ Answer Submitted
-						</Text>
-						<Text className="text-sm opacity-70">
-							{currentAnswer.verificationStatus === "pending" &&
-								"Verifying your answer..."}
-							{currentAnswer.verificationStatus === "correct" &&
-								"Great job! Your answer is correct."}
-							{currentAnswer.verificationStatus === "incorrect" &&
-								"Not quite right. Keep practicing!"}
-						</Text>
-					</ThemedView>
-				) : (
-					<View className="flex-1">
-						<Text className="text-base font-semibold mb-2">
-							Write your solution:
-						</Text>
-						<View className="flex-1 mb-4">
-							<DrawingCanvas
-								ref={canvasRef}
-								onStrokesChange={setHasCanvasStrokes}
-							/>
-						</View>
+				{/* Canvas Area */}
+				<View className="flex-1">
+					<Text className="text-base font-semibold mb-2">
+						Write your solution:
+					</Text>
+					<View className="flex-1 mb-4">
+						<DrawingCanvas
+							ref={canvasRef}
+							onStrokesChange={setHasCanvasStrokes}
+						/>
 					</View>
-				)}
+				</View>
 			</View>
 
 			{/* Bottom Actions Section */}
 			<View className="px-5 pb-6 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
-				{!currentAnswer && (
-					<Button
-						onPress={handleSubmit}
-						disabled={isSubmitting || !hasCanvasStrokes}
-						size="lg"
-						className="mb-3 w-full"
-					>
-						<Text className="font-semibold text-white">
-							{isSubmitting ? "Submitting..." : "Submit Answer"}
-						</Text>
-					</Button>
-				)}
+				<Button
+					onPress={handleSubmit}
+					disabled={isSubmitting || !hasCanvasStrokes}
+					size="lg"
+					className="mb-3 w-full"
+				>
+					<Text className="font-semibold text-white">
+						{isSubmitting ? "Submitting..." : "Submit Answer"}
+					</Text>
+				</Button>
 
 				<View className="flex-row gap-3 mb-3">
 					<Button
@@ -191,17 +175,15 @@ export default function QuestionScreen() {
 					</Button>
 					<Button
 						onPress={
-							isLastQuestion && currentAnswer
+							isLastQuestion
 								? () => router.push(`/results/${setId}`)
 								: handleNext
 						}
-						disabled={!currentAnswer && !isLastQuestion}
+						disabled={false}
 						variant="secondary"
 						className="flex-1"
 					>
-						<Text>
-							{isLastQuestion && currentAnswer ? "View Results" : "Next"}
-						</Text>
+						<Text>{isLastQuestion ? "View Results" : "Skip"}</Text>
 					</Button>
 				</View>
 
