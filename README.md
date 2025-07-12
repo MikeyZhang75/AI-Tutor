@@ -25,15 +25,21 @@ AI Tutor is an innovative mobile application that leverages artificial intellige
 
 ### 2025-07-12
 
+- Features:
+  - Implement complete question set workflow with background verification
+  - Add SafeAreaView to all screens for proper safe area handling
+  - Integrate Neon PostgreSQL database for question sets
+  - Implement drawing persistence and improve question navigation
 - Refactoring:
   - Simplify DrawingCanvas component and button hover states
+  - Streamline question navigation and submission flow
+  - Simplify question navigation by removing questionId from route
+  - Remove analyse tab and disable pull-to-refresh across all screens
 - Fixes:
   - Replace StyleSheet with NativeWind classes in MathView and disable zoom gestures
+  - Prevent question set reloading during exit and optimize MathView performance
 - Style:
-  - Standardize button rounded corners to rounded-lg across all components
-- Documentation:
-  - Update CLAUDE.md to reflect DrawingCanvas refactoring
-  - Update CLAUDE.md to refine and enhance commit process steps
+  - Standardize button rounded corners to rounded-lg
 
 ### 2025-07-11
 
@@ -60,5 +66,3 @@ AI Tutor is an innovative mobile application that leverages artificial intellige
   - Add API compilation script and ignore dist directory
 - Style:
   - Standardize button rounded corners to rounded-lg across all components
-- Documentation:
-  - Multiple updates to CLAUDE.md for improved workflow automation
