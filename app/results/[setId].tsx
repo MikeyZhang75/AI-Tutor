@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, ScrollView, View } from "react-native";
@@ -12,11 +13,13 @@ import {
 } from "@/eden/services/question.service";
 import { useProgressPolling } from "@/lib/hooks/useProgressPolling";
 import { progressStorage } from "@/lib/storage/progressStorage";
+import { useColorScheme } from "@/lib/useColorScheme";
 import type { Progress, QuestionSetProgress } from "@/types/question.types";
 
 export default function ResultsScreen() {
 	const { setId } = useLocalSearchParams<{ setId: string }>();
 	const router = useRouter();
+	const { isDarkColorScheme } = useColorScheme();
 	const [progress, setProgressState] = useState<Progress | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [questionSet, setQuestionSet] = useState<QuestionSet | null>(null);
@@ -202,24 +205,45 @@ export default function ResultsScreen() {
 	const correctAnswers = progress.answers.filter(
 		(a) => a.verificationStatus === "correct",
 	).length;
-	const totalQuestions = questions.length;
+	const incorrectAnswers = progress.answers.filter(
+		(a) => a.verificationStatus === "incorrect",
+	).length;
+	const pendingAnswers = progress.answers.filter(
+		(a) =>
+			a.verificationStatus === "pending" ||
+			a.verificationStatus === "verifying",
+	).length;
 	const scorePercentage = progress.score || 0;
-	const isPassing = scorePercentage >= 70;
+	const isPassing = scorePercentage >= 70 && pendingAnswers === 0; // Only passing if no pending answers
 
 	return (
 		<SafeAreaView className="flex-1 bg-gray-50 dark:bg-gray-900">
 			<ScrollView className="flex-1" bounces={false}>
 				{/* Header */}
 				<ThemedView
-					className={`pt-8 pb-8 ${isPassing ? "bg-green-600 dark:bg-green-700" : "bg-orange-600 dark:bg-orange-700"}`}
+					className={`pt-8 pb-8 ${
+						pendingAnswers > 0
+							? "bg-blue-600 dark:bg-blue-700"
+							: isPassing
+								? "bg-green-600 dark:bg-green-700"
+								: "bg-orange-600 dark:bg-orange-700"
+					}`}
 				>
 					<View className="px-5 items-center">
-						<Text className="text-6xl mb-4">{isPassing ? "🎉" : "💪"}</Text>
-						<Text className="text-3xl font-bold leading-8 text-white text-center mb-2">
-							{isPassing ? "Congratulations!" : "Good Effort!"}
+						<Text className="text-6xl mb-4">
+							{pendingAnswers > 0 ? "⏳" : isPassing ? "🎉" : "💪"}
+						</Text>
+						<Text className="text-3xl font-bold text-white text-center mb-2">
+							{pendingAnswers > 0
+								? "Verifying..."
+								: isPassing
+									? "Congratulations!"
+									: "Good Effort!"}
 						</Text>
 						<Text className="text-white/80 text-center">
-							You completed {questionSet.title}
+							{pendingAnswers > 0
+								? `Checking ${pendingAnswers} answer${pendingAnswers > 1 ? "s" : ""}...`
+								: `You completed ${questionSet.title}`}
 						</Text>
 					</View>
 				</ThemedView>
@@ -229,7 +253,7 @@ export default function ResultsScreen() {
 					{/* Score Card */}
 					<View className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm mb-6">
 						<View className="items-center">
-							<Text className="text-5xl font-bold leading-8 mb-2">
+							<Text className="text-5xl font-bold mb-2">
 								{scorePercentage}%
 							</Text>
 							<Text className="opacity-70">Overall Score</Text>
@@ -237,19 +261,27 @@ export default function ResultsScreen() {
 
 						<View className="flex-row justify-around mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
 							<View className="items-center">
-								<Text className="text-2xl leading-6 font-semibold text-green-600 dark:text-green-400">
+								<Text className="text-2xl font-semibold text-green-600 dark:text-green-400">
 									{correctAnswers}
 								</Text>
 								<Text className="text-sm opacity-70">Correct</Text>
 							</View>
 							<View className="items-center">
-								<Text className="text-2xl leading-6 font-semibold text-red-600 dark:text-red-400">
-									{totalQuestions - correctAnswers}
+								<Text className="text-2xl font-semibold text-red-600 dark:text-red-400">
+									{incorrectAnswers}
 								</Text>
 								<Text className="text-sm opacity-70">Incorrect</Text>
 							</View>
+							{pendingAnswers > 0 && (
+								<View className="items-center">
+									<Text className="text-2xl font-semibold text-amber-600 dark:text-amber-400">
+										{pendingAnswers}
+									</Text>
+									<Text className="text-sm opacity-70">Pending</Text>
+								</View>
+							)}
 							<View className="items-center">
-								<Text className="text-2xl leading-6 font-semibold">
+								<Text className="text-2xl font-semibold">
 									{progress.totalPoints}
 								</Text>
 								<Text className="text-sm opacity-70">Total Points</Text>
@@ -285,29 +317,37 @@ export default function ResultsScreen() {
 									{isPending ? (
 										<ActivityIndicator size="small" />
 									) : (
-										<Text
-											className={`text-2xl ${isCorrect ? "text-green-500" : "text-red-500"}`}
-										>
-											{isCorrect ? "✓" : "✗"}
-										</Text>
+										<Ionicons
+											name={isCorrect ? "checkmark-circle" : "close-circle"}
+											size={24}
+											color={
+												isCorrect
+													? isDarkColorScheme
+														? "#34d399"
+														: "#10b981"
+													: isDarkColorScheme
+														? "#f87171"
+														: "#ef4444"
+											}
+										/>
 									)}
 								</View>
 								<View className="flex-1">
 									<Text className="text-base leading-6 font-semibold">
 										Question {index + 1}
 									</Text>
-									<Text className="text-sm opacity-70">
-										{isCorrect ? `+${question.points} points` : "0 points"}
-									</Text>
 								</View>
 								<Text
-									className={`text-sm ${isCorrect ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
+									className={`text-sm font-semibold ${
+										isPending
+											? "text-gray-600 dark:text-gray-400"
+											: isCorrect
+												? "text-green-600 dark:text-green-400"
+												: "text-red-600 dark:text-red-400"
+									}`}
 								>
-									{isPending
-										? "Verifying..."
-										: isCorrect
-											? "Correct"
-											: "Incorrect"}
+									{!isPending &&
+										(isCorrect ? `+${question.points} pts` : "0 pts")}
 								</Text>
 							</View>
 						);

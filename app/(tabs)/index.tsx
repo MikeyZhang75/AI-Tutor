@@ -5,7 +5,7 @@ import { QuestionSetCard } from "@/components/QuestionSetCard";
 import { ThemedView } from "@/components/ThemedView";
 import { Text } from "@/components/ui/text";
 import {
-	type getQuestionSetsResponse,
+	type QuestionSet,
 	questionService,
 } from "@/eden/services/question.service";
 import { progressStorage } from "@/lib/storage/progressStorage";
@@ -15,7 +15,7 @@ export default function HomeScreen() {
 	const [progressData, setProgressData] = useState<
 		Record<string, QuestionSetProgress>
 	>({});
-	const [questionSets, setQuestionSets] = useState<getQuestionSetsResponse>([]);
+	const [questionSets, setQuestionSets] = useState<QuestionSet[]>([]);
 	const [loading, setLoading] = useState(true);
 
 	const loadQuestionSets = useCallback(async () => {
@@ -84,14 +84,7 @@ export default function HomeScreen() {
 								<QuestionSetCard
 									key={set.id}
 									questionSet={set}
-									progress={
-										progress
-											? {
-													completed: progress.completed,
-													highScore: progress.highScore,
-												}
-											: undefined
-									}
+									progress={progress}
 								/>
 							);
 						})

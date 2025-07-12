@@ -1,15 +1,13 @@
 import { Link } from "expo-router";
 import { Pressable, View } from "react-native";
 import { Text } from "@/components/ui/text";
-import type { getQuestionSetsResponse } from "@/eden/services/question.service";
+import type { QuestionSet } from "@/eden/services/question.service";
+import type { QuestionSetProgress } from "@/types/question.types";
 import { ThemedView } from "./ThemedView";
 
 interface QuestionSetCardProps {
-	questionSet: getQuestionSetsResponse[number];
-	progress?: {
-		completed: boolean;
-		highScore: number;
-	};
+	questionSet: QuestionSet;
+	progress?: QuestionSetProgress;
 }
 
 export function QuestionSetCard({
