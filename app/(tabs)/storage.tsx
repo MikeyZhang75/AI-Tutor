@@ -1,3 +1,4 @@
+import * as Clipboard from "expo-clipboard";
 import { useCallback, useEffect, useState } from "react";
 import { ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -32,6 +33,15 @@ export default function StorageScreen() {
 		}
 	};
 
+	const copyToClipboard = async () => {
+		try {
+			const jsonData = JSON.stringify(storageData, null, 2);
+			await Clipboard.setStringAsync(jsonData);
+		} catch (error) {
+			console.error("Error copying to clipboard:", error);
+		}
+	};
+
 	const clearProgressForSet = async (setId: string) => {
 		try {
 			await progressStorage.clearProgress(setId);
@@ -47,9 +57,14 @@ export default function StorageScreen() {
 				<View className="p-4">
 					<View className="flex-row justify-between items-center mb-4">
 						<Text className="text-2xl font-bold">Storage Debug</Text>
-						<Button onPress={clearAllData} variant="destructive" size="sm">
-							<Text className="text-white">Clear All</Text>
-						</Button>
+						<View className="flex-row gap-2">
+							<Button onPress={copyToClipboard} variant="outline" size="sm">
+								<Text>Copy</Text>
+							</Button>
+							<Button onPress={clearAllData} variant="destructive" size="sm">
+								<Text className="text-white">Clear All</Text>
+							</Button>
+						</View>
 					</View>
 
 					{storageData.length === 0 ? (
