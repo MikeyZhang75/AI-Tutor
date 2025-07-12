@@ -10,6 +10,7 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as React from "react";
 import { Platform } from "react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { QuestionProvider } from "@/contexts/QuestionContext";
 import { NAV_THEME } from "@/lib/constants";
 import { useColorScheme } from "@/lib/useColorScheme";
@@ -51,12 +52,14 @@ export default function RootLayout() {
 	}
 
 	return (
-		<ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
-			<QuestionProvider>
-				<StatusBar style={isDarkColorScheme ? "light" : "dark"} />
-				<Stack />
-			</QuestionProvider>
-		</ThemeProvider>
+		<SafeAreaProvider>
+			<ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
+				<QuestionProvider>
+					<StatusBar style={isDarkColorScheme ? "light" : "dark"} />
+					<Stack screenOptions={{ headerShown: false }} />
+				</QuestionProvider>
+			</ThemeProvider>
+		</SafeAreaProvider>
 	);
 }
 

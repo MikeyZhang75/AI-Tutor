@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { RefreshControl, ScrollView, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedView } from "@/components/ThemedView";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
@@ -48,12 +49,12 @@ export default function StorageScreen() {
 	};
 
 	return (
-		<ThemedView className="flex-1 bg-gray-50 dark:bg-gray-900">
+		<SafeAreaView className="flex-1 bg-gray-50 dark:bg-gray-900">
 			<ScrollView
+				className="flex-1"
 				refreshControl={
 					<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
 				}
-				className="flex-1"
 			>
 				<View className="p-4">
 					<View className="flex-row justify-between items-center mb-4">
@@ -133,6 +134,6 @@ export default function StorageScreen() {
 					)}
 				</View>
 			</ScrollView>
-		</ThemedView>
+		</SafeAreaView>
 	);
 }

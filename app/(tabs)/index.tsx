@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { RefreshControl, ScrollView } from "react-native";
+import { RefreshControl, ScrollView, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { QuestionSetCard } from "@/components/QuestionSetCard";
 import { ThemedView } from "@/components/ThemedView";
 import { Text } from "@/components/ui/text";
@@ -36,42 +37,50 @@ export default function HomeScreen() {
 	}, [loadProgress]);
 
 	return (
-		<ScrollView
-			className="flex-1 bg-gray-50 dark:bg-gray-900"
-			refreshControl={
-				<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-			}
-		>
-			{/* Header */}
-			<ThemedView className="bg-blue-600 dark:bg-blue-700 px-5 pt-12 pb-8 rounded-b-3xl shadow-lg">
-				<Text className="text-3xl font-bold leading-8 text-white mb-2">
-					🎓 AI Tutor
-				</Text>
-				<Text className="text-white/80">Choose a question set to practice</Text>
-			</ThemedView>
+		<SafeAreaView className="flex-1 bg-gray-50 dark:bg-gray-900">
+			<ScrollView
+				className="flex-1"
+				refreshControl={
+					<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+				}
+			>
+				{/* Header */}
+				<ThemedView className="bg-blue-600 dark:bg-blue-700 pt-8 pb-8 rounded-b-3xl shadow-lg">
+					<View className="px-5">
+						<Text className="text-3xl font-bold leading-8 text-white mb-2">
+							🎓 AI Tutor
+						</Text>
+						<Text className="text-white/80">
+							Choose a question set to practice
+						</Text>
+					</View>
+				</ThemedView>
 
-			{/* Question Sets */}
-			<ThemedView className="px-5 py-6">
-				<Text className="text-xl font-bold mb-4">Available Question Sets</Text>
+				{/* Question Sets */}
+				<ThemedView className="px-5 py-6">
+					<Text className="text-xl font-bold mb-4">
+						Available Question Sets
+					</Text>
 
-				{mockQuestionSets.map((set) => {
-					const progress = progressData[set.id];
-					return (
-						<QuestionSetCard
-							key={set.id}
-							questionSet={set}
-							progress={
-								progress
-									? {
-											completed: progress.completed,
-											highScore: progress.highScore,
-										}
-									: undefined
-							}
-						/>
-					);
-				})}
-			</ThemedView>
-		</ScrollView>
+					{mockQuestionSets.map((set) => {
+						const progress = progressData[set.id];
+						return (
+							<QuestionSetCard
+								key={set.id}
+								questionSet={set}
+								progress={
+									progress
+										? {
+												completed: progress.completed,
+												highScore: progress.highScore,
+											}
+										: undefined
+								}
+							/>
+						);
+					})}
+				</ThemedView>
+			</ScrollView>
+		</SafeAreaView>
 	);
 }

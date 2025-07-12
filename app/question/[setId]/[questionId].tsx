@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, SafeAreaView, View } from "react-native";
 import type { DrawingCanvasRef } from "@/components/DrawingCanvas";
 import DrawingCanvas from "@/components/DrawingCanvas";
 import { MathView } from "@/components/MathView";
@@ -89,7 +89,9 @@ export default function QuestionScreen() {
 
 	const handleExit = () => {
 		exitQuestionSet();
-		router.replace("/");
+		// Navigate back to tabs root, clearing the navigation stack
+		router.dismissAll();
+		router.replace("/(tabs)");
 	};
 
 	if (!currentQuestion || !currentSet) {
@@ -101,34 +103,14 @@ export default function QuestionScreen() {
 	}
 
 	return (
-		<View className="flex-1 bg-gray-50 dark:bg-gray-900">
-			{/* Header Section */}
-			<ThemedView className="bg-blue-600 dark:bg-blue-700 px-5 pt-12 pb-4">
-				<View className="flex-row justify-between items-center mb-2">
-					<Text className="text-white/80 text-sm">{currentSet.title}</Text>
-					<Text className="text-white/80 text-sm">
-						Question {questionIndex + 1} of {currentSet.totalQuestions}
-					</Text>
-				</View>
-
-				{/* Progress bar */}
-				<View className="h-2 bg-white/20 rounded-full overflow-hidden">
-					<View
-						className="h-full bg-white"
-						style={{
-							width: `${((questionIndex + 1) / currentSet.totalQuestions) * 100}%`,
-						}}
-					/>
-				</View>
-			</ThemedView>
-
+		<SafeAreaView className="flex-1 bg-gray-50 dark:bg-gray-900">
 			{/* Content Section */}
 			<View className="flex-1 px-5 py-4">
 				{/* Question Card */}
 				<ThemedView className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm mb-4">
 					<View className="flex-row justify-between items-start mb-2">
 						<Text className="text-sm font-semibold opacity-60">
-							Question {questionIndex + 1}
+							Question {questionIndex + 1} / {currentSet.totalQuestions}
 						</Text>
 						<Text className="text-sm bg-blue-100 dark:bg-blue-900 px-2 py-1 rounded">
 							{currentQuestion.points} points
@@ -139,9 +121,6 @@ export default function QuestionScreen() {
 
 				{/* Canvas Area */}
 				<View className="flex-1">
-					<Text className="text-base font-semibold mb-2">
-						Write your solution:
-					</Text>
 					<View className="flex-1 mb-4">
 						<DrawingCanvas
 							ref={canvasRef}
@@ -191,6 +170,6 @@ export default function QuestionScreen() {
 					<Text>Exit Question Set</Text>
 				</Button>
 			</View>
-		</View>
+		</SafeAreaView>
 	);
 }
